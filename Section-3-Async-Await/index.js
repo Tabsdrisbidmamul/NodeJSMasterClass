@@ -19,6 +19,49 @@ const writeFilePromise = (file, data) => {
   });
 };
 
+const readFileAsyncAwait = async () => {
+  try {
+    const data = await readFilePromise(`${__dirname}/dog.txt`);
+    console.log(`Dog Breed: ${data}`);
+
+    const res = await superAgent.get(
+      `https://dog.ceo/api/breed/${data}/images/random`
+    );
+    console.log(`Message: ${res.body.message}\nSuccess: ${res.body.status}`);
+
+    await writeFilePromise('dog-image.txt', res.body.message);
+    console.log(`Random Dog Breed saved to file`);
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+  return '2: READY 🐶';
+};
+
+(async () => {
+  try {
+    console.log('1: Will get Dog pics!');
+    const x = await readFileAsyncAwait();
+    console.log(x);
+    console.log('3: Done getting Dog pics!');
+  } catch (e) {
+    console.log('Something went wrong 🔥');
+  }
+})();
+
+/*
+console.log('1: Will get Dog pics!');
+readFileAsyncAwait()
+  .then((x) => {
+    console.log(x);
+    console.log('3: Done getting Dog pics!');
+  })
+  .catch((e) => {
+    console.log('Something went wrong');
+  });
+*/
+
+/*
 readFilePromise(`${__dirname}/dog.txt`)
   .then((data) => {
     console.log(`Dog Breed: ${data}`);
@@ -38,3 +81,4 @@ readFilePromise(`${__dirname}/dog.txt`)
     console.log(`Random Dog Breed saved to file`);
   })
   .catch(() => console.log('Something went wrong'));
+*/
