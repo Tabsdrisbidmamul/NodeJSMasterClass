@@ -5,6 +5,18 @@ const tours = JSON.parse(
   fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`)
 );
 
+/**
+ * Error Handling using the Middleware stack
+ *
+ *  - In our route handlers for getTour, updateTour and deleteTour we have error handling for IDs that are out of bounds of the array
+ *
+ *  - The code for all three is the same, thus breaking the DRY principle
+ *
+ *  - Using the middleware stack, we can write a handler that sees the request before getting to the actual route handling, we can check if the ID is valid, and if so carry onto the next middleware (being the route handlers) but if the ID is not valid, then finish the request-response cycle here and return a 404 saying "Invalid ID"
+ *
+ *
+ *
+ */
 exports.checkID = (req, res, next, val) => {
   console.log(`Tour id is: ${val}`);
 
@@ -12,6 +24,16 @@ exports.checkID = (req, res, next, val) => {
     return res.status(404).json({
       status: 'fail',
       message: 'Invalid ID',
+    });
+  }
+  next();
+};
+
+exports.checkBody = (req, res, next) => {
+  if (!req.body.name || !req.body.price) {
+    return res.status(400).json({
+      status: 'fail',
+      message: 'Missing name or price',
     });
   }
   next();
@@ -64,7 +86,7 @@ exports.createTour = (req, res) => {
   tours.push(newTour);
 
   fs.writeFile(
-    `${__dirname}/dev-data/data/tours-simple.json`,
+    `${__dirname}/../dev-data/data/tours-simple.json`,
     JSON.stringify(tours),
     (err) => {
       res.status(201).json({
@@ -85,7 +107,7 @@ exports.updateTour = (req, res) => {
   const updatedTour = Object.assign(tours[getTourIndex], req.body);
 
   fs.writeFile(
-    `${__dirname}/dev-data/data/tours-simple.json`,
+    `${__dirname}/../dev-data/data/tours-simple.json`,
     JSON.stringify(tours),
     (err) => {
       res.status(200).json({
@@ -106,7 +128,7 @@ exports.deleteTour = (req, res) => {
   tours.splice(getTourIndex, 1);
 
   fs.writeFile(
-    `${__dirname}/dev-data/data/tours-simple.json`,
+    `${__dirname}/../dev-data/data/tours-simple.json`,
     JSON.stringify(tours),
     (err) => {
       res.status(204).json({

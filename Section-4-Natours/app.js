@@ -13,6 +13,25 @@ app.use(morgan('dev'));
 app.use(express.json());
 
 /**
+ * We can use express to serve up static files from the file structure, its is a middleware function, and we use the built-in function express.static(pathNameToStaticFiles)
+ *
+ * pathNameToStaticFiles:= is simply where the files live - in express development these are in the "public" folder, and writ the path like so
+ *
+ *   - `${__dirname}/public`
+ *
+ * HOW TO USE
+ * In the Browser we give the standard localhost address, and top get the static files, we simply place a forward slash (/) then the static file name -
+ *  - http://127.0.0.1:3000/overview.html
+ *
+ * If the file is in sub-folder, we write the path to access the file within the sub-folder
+ *  - http://127.0.0.1:3000/img/pin.png
+ *
+ * WHY DOES IT WORK
+ * Express assumes that anything after the / and that the path is a location to a static file (has a file extension) then Express will serve the up the file, however if not, then it will go through the usual route handlers
+ */
+app.use(express.static(`${__dirname}/public`));
+
+/**
  * To make our own middleware, we use app.use() and pass in a function which has access to three parameters -> req, res and next.
  *
  * NOTE: ALWAYS CALL next() AT THE END OF THE CODE
