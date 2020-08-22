@@ -1,3 +1,4 @@
 complete-node-bootcamp/
 */node_modules/
 */.vscode/
+.DS_Store
