@@ -7,7 +7,9 @@ const userRouter = require('./routes/userRoutes');
 const app = express();
 
 // MIDDLEWARES
-app.use(morgan('dev'));
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+}
 
 // middleware that sits in the middle of req(uests) and res(ponse) - we do this to get access to the body of a HTTP request
 app.use(express.json());
