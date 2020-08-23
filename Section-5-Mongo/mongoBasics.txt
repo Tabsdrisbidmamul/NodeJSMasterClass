@@ -1,0 +1,31 @@
+CREATE DB
+To create a a DB or switch to an already exiting DB we type the command 
+    - use <DB name>
+
+CREATE COLLECTION
+To create a Collection (Table) we use the command
+
+    - db:= stands for the current DB selected
+
+    - Collection Name:= if it does not exist it will create it, and if it does, it will append the new document (row) to the Collection (table)
+
+    CREATE DOCUMENT
+    - insertOne:= will insert one new document (record)
+
+    - insertMany:= will insert many document (records) to the collection (table)
+       
+        - db.< Name>.insert[One/Many]( {  } )
+
+
+LOOKUP COLLECTION
+To see the any existing documents within the collection, we use the command
+    - db.<Collection Name>.find()
+
+
+SHOW ALL DBS
+To see all dbs in the mongo we type the command
+    - shows dbs
+
+SHOW COLLECTIONS FOR A COLLECTION WE HAVE SELECTED
+We have to already have selected a collection to use this command, we type
+    - show collections
