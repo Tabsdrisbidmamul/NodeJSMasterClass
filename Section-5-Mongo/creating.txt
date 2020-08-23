@@ -1,0 +1,13 @@
+CREATE COLLECTION
+To create a Collection (Table) we use the command
+
+    - db:= stands for the current DB selected
+
+    - Collection Name:= if it does not exist it will create it, and if it does, it will append the new document (row) to the Collection (table)
+
+    CREATE DOCUMENT
+    - insertOne:= will insert one new document (record)
+        - db.< Name>.insertOne( {  } )
+
+    - insertMany:= will insert many document (records) to the collection (table). This takes an array of objects (documents) that will be inserted into the Collection
+        - db.< Name>.insertMany([{  }, {  }, {  }, ...]) 

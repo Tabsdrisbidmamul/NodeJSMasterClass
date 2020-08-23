@@ -1,0 +1,17 @@
+DELETING COLLECTIONS
+***These commands must always be done with care or wrong data will be deleted***
+
+DELETING A SINGLE RECORD
+***WILL DELETE THE FIRST RECORD THAT MATCHES THE FILTER***
+
+Just like with updating, there is deleteOne() and deleteMany() methods, which take 1 arguments
+    1. The filter
+
+    -  db.tours.deleteOne({rating: {$lt: 4.8} })
+
+DELETING MANY RECORDS
+Will delete all records that match the search criteria
+    -  db.tours.deleteMany({rating: {$lte: 4.8} })
+
+This will delete all records from the Collection as the empty object ({}) refers to all documents in the Collection 
+    - db.tours.deleteMany({})

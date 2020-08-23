@@ -1,0 +1,56 @@
+READ COLLECTION
+To see the any existing documents (see the records in the table) within the collection, we use the command
+    - db.<Collection Name>.find()
+
+MAKE OUTPUT READABLE
+    - db.<collection name>.find().pretty()
+
+FILTER (BASICALLY WHERE)
+Just like in SQL, we can use the WHERE clause to filter our results, we can do so with find()
+
+We pass in an object into the find() as an argument, and we can have it to query to match Strings, gt, lt AND OR NOT etc..
+    
+    - db.tours.find({ name: "The Forest Hiker" })
+    This will return all records that have the name equal to "The Forest Hiker" exactly
+
+FILTER CONDITIONAL OPERATORS
+To start using conditional operators, we have to use Mongo special operators to do so: all operators start with a dollar sign ($)
+    $lt
+    $lte
+    $gt
+    $gte
+
+We say what keys we are looking for so in this case rating, but to make it say that we want all ratings that are greater than or equal to 4.7 we have to enclose that condition within a object
+
+The conditional operators becomes the key, and the value is the value we want, this object now is saying >= 4.7
+
+Put it all together and we get (rating >= 4.7)
+    - db.tours.find({ rating: { $gte: 4.7 } })
+
+AND QUERY
+To do an AND query, we simply add the next search criteria as the next key-value pair in the filter for find()
+
+We search for prices that are less than or equal to 500 and ratings that are greater than or equal to 4.8
+
+(price <= 500) AND (rating >= 4.8)
+    -  db.tours.find( { price: { $lte: 500 }, rating: { $gte: 4.8 } })
+
+OR QUERY
+To do an OR query, we have to do 2 things
+    1. we write out the $or variable
+    2. we set its value equal to an array of objects
+
+Each object within the array is a condition, and the $or will try to return results if any of those conditions return as true
+
+(price <= 500) OR (rating >= 4.8)
+    - db.tours.find({ $or: [ {price: {$lte: 500}}, {rating: {$gte: 4.8}} ]  })
+
+PROJECTION (BASICALLY SELECT)
+We add a second object into the find() argument list, and what this will do will only output records that belong to that field
+
+So we only get the _id and the name fields being shown in the output
+    - db.tours.find({ $or: [{price: {$lte: 500}}, {rating: {$gte: 4.8}}]  }, {name: 1}).pretty()
+
+MULTIPLE FIELDS
+To get multiple fields selected, we add it to the object list in the second argument, here we are saying we don't want the _id to show, but only the name fields
+    - db.tours.find({ $or: [{price: {$lte: 500}}, {rating: {$gte: 4.8}}]  }, {_id: 0, name: 1}).pretty()

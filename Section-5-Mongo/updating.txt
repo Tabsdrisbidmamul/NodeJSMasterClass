@@ -1,0 +1,25 @@
+UPDATE COLLECTION
+To update documents there are two methods, updateOne() and updateMany()
+
+UPDATING A SINGLE RECORD
+*WILL UPDATE THE FIRST MATCH*
+
+The updateOne() method takes 2 parameters, a filter condition to find the document in question, and then a set of values to update the existing ones
+
+    -The First argument is just like from the reading a document, this will filter the document to find the a first match,
+    - The Second argument is the set of values to update the document
+        - In the second argument we use the $set keyword and its value are the "set" of values to update it to, key names should be the same as the ones in the document, if the key does not exist, then a new a field will be created
+
+    - db.tours.updateOne( { name: "The Snow Adventurer" }, { $set: { price: 597 } } )
+
+UPDATING MULTIPLE RECORDS
+Literally the same the as updateOne()
+    - db.tours.updateMany({ price: {$gt: 500}, rating: {$gte: 4.8} }, { $set: { premiumTours: true }} )
+
+REPLACING ENTIRE RECORD DATA
+Just like updateOne() and updateMany() we can update all of the records entries with this command, and it takes the same 2 arguments as before 
+    1. The Search Query
+    2. The new values
+
+This will replace a document within the Collection with the _id of 1 (of course the _ids' are random Hex values)
+    - db.tours.replaceOne( { _id: 1 }, { name: "The Desert Walker", price: 875, rating: 4.9, premiumTours: true})
