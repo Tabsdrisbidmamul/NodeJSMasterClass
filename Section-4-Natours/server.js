@@ -1,3 +1,4 @@
+// mongo "mongodb+srv://cluster0.urnf4.mongodb.net/Natours" --username Idris
 const dotenv = require('dotenv');
 
 dotenv.config({ path: './config.env' });
