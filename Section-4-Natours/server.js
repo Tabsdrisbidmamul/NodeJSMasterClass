@@ -86,13 +86,26 @@ const Tour = mongoose.model('Tour', tourSchema);
 /**
  * USING A MODEL
  * To use a model, we actually have to instantiate the model we just created and in its constructor, we pass an object that contains key-value pairs of data entry - so the key is the field name and the value is the data
+ *
+ * HOW TO SAVE THE INSTANCE TO THE DB:
+ * We use the instance object and use the save() method on it
+ * This method returns a promise so we can do various other things to it
+ *
+ * However it is as simple as that, just .save() on the object instance
  */
 const testTour = new Tour({
-  name: 'The Forest Hiker',
-  rating: 4.7,
-  price: 497,
+  name: 'The Park Camper',
+  price: 997,
 });
 
+testTour
+  .save()
+  .then((doc) => {
+    console.log(doc);
+  })
+  .catch((err) => {
+    console.log('ERROR: ', err);
+  });
 /**
  * ENVIRONMENT VARIABLES
  * There are 2 types of environment variables:
