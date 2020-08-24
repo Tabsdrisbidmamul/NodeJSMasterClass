@@ -1,11 +1,97 @@
-// mongo "mongodb+srv://cluster0.urnf4.mongodb.net/Natours" --username Idris
+const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 
 dotenv.config({ path: './config.env' });
-
 const app = require('./app');
 
-console.log(process.env);
+const DB = process.env.DATABASE.replace(
+  '<PASSWORD>',
+  process.env.DATABASE_PASSWORD
+);
+
+/**
+ * CONNECTING THE EXPRESS APP TO ATLAS DB
+ * We import the mongoose (Which is a MongoDB driver) and we use the connect method to start the connection to the DB (in the cloud)
+ *
+ * CONNECT()
+ * This method takes 2 arguments, the DB connection string and an object which we can define a set of rules of how the connection should be
+ * 
+ * Argument List
+ *    1. The DB string should be kept in the environment variable list and be defined in the server file
+ * 
+ *  2. The object list will contain values to how the connection should be, these values should always stay like those at the bottom to ensure that the connection works
+ * 
+ * PROMISE
+ * The connect() method returns a promise so that we can use the then() method on it process even more data if we want
+ * 
+ * .connect(DB, {
+    useNewUrlParser: true,
+    useCreateIndex: true,
+    useFindAndModify: true,
+    useUnifiedTopology: true,
+  })
+  .then((con) => console.log(con.connections));
+ */
+
+mongoose
+  .connect(DB, {
+    useNewUrlParser: true,
+    useCreateIndex: true,
+    useFindAndModify: true,
+    useUnifiedTopology: true,
+  })
+  .then((con) => console.log(con.connections));
+
+/**
+ * SCHEMA
+ * The schema can be seen as us first defining what the document (table) fields will be initially
+ *
+ * HOW TO DO IT
+ * We use the constructor mongoose.Schema() and pass in an object which will contain the field names and their values will be their type, uniqueness, required.. etc.
+ *
+ * type:= we can have the type simply equal to Javascript basic data types, but to customize, we wrap it around an object and give those attributes truthy/falsy values
+ */
+
+const tourSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: [true, 'A tour must have a name'],
+    unique: true,
+  },
+  rating: {
+    type: Number,
+    default: 4.5,
+  },
+  price: {
+    type: Number,
+    required: [true, 'A tour must have a price'],
+  },
+});
+
+/**
+ * MODEL
+ * We then use the schema we just created, and tell mongoose that this schema will be the model for our data entry
+ *
+ * Arguments
+ *  1. The name of the document (table)
+ *  2. The schema
+ *
+ * WHAT IS THE MODEL?
+ * The model is essentially a wrapper around the schema, that allows use to do the basic CRUD operations on it
+ *
+ * It is common to have the model variable as uppercase, to differentiate it as  class basically
+ */
+const Tour = mongoose.model('Tour', tourSchema);
+
+/**
+ * USING A MODEL
+ * To use a model, we actually have to instantiate the model we just created and in its constructor, we pass an object that contains key-value pairs of data entry - so the key is the field name and the value is the data
+ */
+const testTour = new Tour({
+  name: 'The Forest Hiker',
+  rating: 4.7,
+  price: 497,
+});
 
 /**
  * ENVIRONMENT VARIABLES
@@ -73,4 +159,9 @@ app.listen(port, () => {
  *
  * 5. In the Controllers, the res.send() -> which is json() [will call .send()] will end the request-response cycle and be ready for the next request from a client
  *
+ */
+
+/**
+ * CONNECT MONGO ON TERMINAL
+ * mongo "mongodb+srv://cluster0.urnf4.mongodb.net/Natours" --username Idris
  */
