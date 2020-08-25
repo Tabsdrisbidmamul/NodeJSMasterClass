@@ -1,9 +1,4 @@
-const fs = require('fs');
-
-// get the tours
-const tours = JSON.parse(
-  fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`)
-);
+const Tour = require('../models/tourModel');
 
 /**
  * Error Handling using the Middleware stack
@@ -17,7 +12,7 @@ const tours = JSON.parse(
  *
  *
  */
-exports.checkID = (req, res, next, val) => {
+/* exports.checkID = (req, res, next, val) => {
   console.log(`Tour id is: ${val}`);
 
   if (Number(req.params.id) > tours.length) {
@@ -27,9 +22,9 @@ exports.checkID = (req, res, next, val) => {
     });
   }
   next();
-};
+}; */
 
-exports.checkBody = (req, res, next) => {
+/* exports.checkBody = (req, res, next) => {
   if (!req.body.name || !req.body.price) {
     return res.status(400).json({
       status: 'fail',
@@ -37,7 +32,7 @@ exports.checkBody = (req, res, next) => {
     });
   }
   next();
-};
+}; */
 
 // ROUTING HANDLERS
 exports.getAllTours = (req, res) => {
@@ -45,10 +40,10 @@ exports.getAllTours = (req, res) => {
   res.status(200).json({
     status: 'success',
     requestedAt: req.requestTime,
-    results: tours.length,
-    data: {
-      tours,
-    },
+    // results: tours.length,
+    // data: {
+    //   tours,
+    // },
   });
 };
 
@@ -68,74 +63,53 @@ exports.getTour = (req, res) => {
    */
 
   const id = Number(req.params.id);
-  const tour = tours.find((t) => t.id === id);
+  // const tour = tours.find((t) => t.id === id);
 
   res.status(200).json({
     status: 'success',
-    results: tours.length,
-    data: {
-      tour,
-    },
+    // results: tours.length,
+    // data: {
+    //   tour,
+    // },
   });
 };
 
-exports.createTour = (req, res) => {
-  const newId = tours[tours.length - 1].id + 1;
-  const newTour = Object.assign({ id: newId }, req.body);
+exports.createTour = async (req, res) => {
+  try {
+    // const newTour = new Tour({});
+    // newTour.save()
 
-  tours.push(newTour);
+    const newTour = await Tour.create(req.body);
 
-  fs.writeFile(
-    `${__dirname}/../dev-data/data/tours-simple.json`,
-    JSON.stringify(tours),
-    (err) => {
-      res.status(201).json({
-        status: 'success',
-        message: 'New Tour Created',
-        data: {
-          tour: newTour,
-        },
-      });
-    }
-  );
+    res.status(201).json({
+      status: 'success',
+      message: 'New Tour Created',
+      data: {
+        tour: newTour,
+      },
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'error',
+      message: err.message,
+    });
+  }
 };
 
 exports.updateTour = (req, res) => {
-  const id = Number(req.params.id);
-  const getTourIndex = tours.findIndex((t) => t.id === id);
-
-  const updatedTour = Object.assign(tours[getTourIndex], req.body);
-
-  fs.writeFile(
-    `${__dirname}/../dev-data/data/tours-simple.json`,
-    JSON.stringify(tours),
-    (err) => {
-      res.status(200).json({
-        status: 'success',
-        message: 'Tour Updated',
-        data: {
-          tour: updatedTour,
-        },
-      });
-    }
-  );
+  res.status(200).json({
+    status: 'success',
+    message: 'Tour Updated',
+    // data: {
+    //   tour: updatedTour,
+    // },
+  });
 };
 
 exports.deleteTour = (req, res) => {
-  const id = Number(req.params.id);
-  const getTourIndex = tours.findIndex((t) => t.id === id);
-
-  tours.splice(getTourIndex, 1);
-
-  fs.writeFile(
-    `${__dirname}/../dev-data/data/tours-simple.json`,
-    JSON.stringify(tours),
-    (err) => {
-      res.status(204).json({
-        status: 'success',
-        message: 'Tour Deleted',
-        data: null,
-      });
-    }
-  );
+  res.status(204).json({
+    status: 'success',
+    message: 'Tour Deleted',
+    data: null,
+  });
 };
