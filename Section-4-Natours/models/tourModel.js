@@ -10,21 +10,63 @@ const mongoose = require('mongoose');
  * type:= we can have the type simply equal to Javascript basic data types, but to customize, we wrap it around an object and give those attributes truthy/falsy values
  */
 
-const tourSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, 'A tour must have a name'],
-    unique: true,
+const tourSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, 'A tour must have a name'],
+      unique: true,
+      trim: true,
+    },
+    duration: {
+      type: Number,
+      required: [true, 'A tour must have a duration'],
+    },
+    maxGroupSize: {
+      type: Number,
+      required: [true, 'A tour must have a group size'],
+    },
+    difficulty: {
+      type: String,
+      required: [true, 'A tour must have a difficulty'],
+    },
+    ratingsAverage: {
+      type: Number,
+      default: 4.5,
+    },
+    ratingsQuantity: {
+      type: Number,
+      default: 0,
+    },
+    price: {
+      type: Number,
+      required: [true, 'A tour must have a price'],
+    },
+    priceDiscount: Number,
+    summary: {
+      type: String,
+      trim: true,
+      required: [true, 'A tour must have a description'],
+    },
+    description: {
+      type: String,
+      trim: true,
+    },
+    imageCover: {
+      type: String,
+      required: [true, 'A tour must have a image cover'],
+    },
+    images: [String],
+    /* { timestamps: true } : creates 2 fields createdAt and UpdatedAt fields for us down below is hot make them manually
+     */
+    // createdAt: {
+    //   type: Date,
+    //   default: Date.now(),
+    // },
+    startDates: [Date],
   },
-  rating: {
-    type: Number,
-    default: 4.5,
-  },
-  price: {
-    type: Number,
-    required: [true, 'A tour must have a price'],
-  },
-});
+  { timestamps: true }
+);
 
 /**
  * MODEL
@@ -56,8 +98,8 @@ module.exports = Tour;
  * Instead of object instance of the Model itself using the "new" operator
  * We can instead use the .create() method on the Model itself - which as well returns a Promise - so we can async and await it
  *  - const newTour = await Tour.create(req.body);
- * 
- * This has a major benefit that it is less to write, but 
+ *
+ * This has a major benefit that it is less to write, but
  */
 /* const testTour = new Tour({
   name: 'The Park Camper',

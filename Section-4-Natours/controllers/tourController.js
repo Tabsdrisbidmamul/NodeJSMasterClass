@@ -35,16 +35,27 @@ const Tour = require('../models/tourModel');
 }; */
 
 // ROUTING HANDLERS
-exports.getAllTours = (req, res) => {
-  console.log(req.requestTime);
-  res.status(200).json({
-    status: 'success',
-    requestedAt: req.requestTime,
-    // results: tours.length,
-    // data: {
-    //   tours,
-    // },
-  });
+exports.getAllTours = async (req, res) => {
+  try {
+    // find() returns an array of JS converted objects
+    const tours = await Tour.find();
+
+    res.status(200).json({
+      status: 'success',
+      results: tours.length,
+      data: {
+        tours,
+      },
+    });
+  } catch (err) {
+    res.status(404).json({
+      status: 'error',
+      message: {
+        errorMessage: err.message,
+        error: err,
+      },
+    });
+  }
 };
 
 /**
@@ -55,23 +66,32 @@ exports.getAllTours = (req, res) => {
  * We can specify optical parameters we place a question mark (?) at the end of the variable name so /api/v1/tours/:id? would mean that the tour id is optional now
  */
 
-exports.getTour = (req, res) => {
+exports.getTour = async (req, res) => {
   // console.log(req.params);
 
   /**
    * We use req.params to return specific parts of the URL - and in this case we have a named variable within the the resource that we have created - so we simply call req.params then access the id property to get back the ID from the end-user path
    */
+  try {
+    // Tour.findOne({ _id: req.params.id })
+    const tour = await Tour.findById(req.params.id);
 
-  const id = Number(req.params.id);
-  // const tour = tours.find((t) => t.id === id);
-
-  res.status(200).json({
-    status: 'success',
-    // results: tours.length,
-    // data: {
-    //   tour,
-    // },
-  });
+    res.status(200).json({
+      status: 'success',
+      results: tour.length,
+      data: {
+        tour,
+      },
+    });
+  } catch (err) {
+    res.status(404).json({
+      status: 'error',
+      message: {
+        errorMessage: err.message,
+        error: err,
+      },
+    });
+  }
 };
 
 exports.createTour = async (req, res) => {
@@ -91,25 +111,55 @@ exports.createTour = async (req, res) => {
   } catch (err) {
     res.status(400).json({
       status: 'error',
-      message: err.message,
+      message: {
+        errorMessage: err.message,
+        error: err,
+      },
     });
   }
 };
 
-exports.updateTour = (req, res) => {
-  res.status(200).json({
-    status: 'success',
-    message: 'Tour Updated',
-    // data: {
-    //   tour: updatedTour,
-    // },
-  });
+exports.updateTour = async (req, res) => {
+  try {
+    const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Tour Updated',
+      data: {
+        tour,
+      },
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'error',
+      message: {
+        errorMessage: err.message,
+        error: err,
+      },
+    });
+  }
 };
 
-exports.deleteTour = (req, res) => {
-  res.status(204).json({
-    status: 'success',
-    message: 'Tour Deleted',
-    data: null,
-  });
+exports.deleteTour = async (req, res) => {
+  try {
+    await Tour.findByIdAndDelete(req.params.id);
+
+    res.status(204).json({
+      status: 'success',
+      message: 'Tour Deleted',
+      data: null,
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'error',
+      message: {
+        errorMessage: err.message,
+        error: err,
+      },
+    });
+  }
 };
