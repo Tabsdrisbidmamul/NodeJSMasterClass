@@ -17,4 +17,38 @@ mongoose
     useFindAndModify: true,
     useUnifiedTopology: true,
   })
-  .then((con) => console.log(con.connections));
+  .then((con) => console.log('DB connection successful'));
+
+// READ JSON FILE
+const tours = JSON.parse(
+  fs.readFileSync(`${__dirname}/tours-simple.json`, 'utf8')
+);
+
+// IMPORT DATA INTO DB
+const importData = async () => {
+  try {
+    await Tour.create(tours);
+    console.log('Data successfully imported');
+  } catch (err) {
+    console.log(err);
+  } finally {
+    process.exit();
+  }
+};
+
+// DELETE ALL DATA FROM COLLECTION
+const deleteData = async () => {
+  try {
+    await Tour.deleteMany();
+    console.log('Data successfully deleted');
+  } catch (err) {
+    console.log(err);
+  } finally {
+    process.exit();
+  }
+};
+if (process.argv[2] === '--import') {
+  importData();
+} else if (process.argv[2] === '--delete') {
+  deleteData();
+}

@@ -52,15 +52,15 @@ app.use(express.static(`${__dirname}/public`));
  * ORDER OF MIDDLEWARE
  * We always place the middleware that ends the request-response cycle (usually the routing) at the end, and generic or computing middleware at the top of the code
  */
-app.use((req, res, next) => {
-  console.log('Hello from the middleware!');
-  next();
-});
+// app.use((req, res, next) => {
+//   console.log('Hello from the middleware!');
+//   next();
+// });
 
-app.use((req, res, next) => {
-  req.requestTime = new Date().toISOString();
-  next();
-});
+// app.use((req, res, next) => {
+//   req.requestTime = new Date().toISOString();
+//   next();
+// });
 
 /**
  * Routes

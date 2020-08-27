@@ -37,9 +37,57 @@ const Tour = require('../models/tourModel');
 // ROUTING HANDLERS
 exports.getAllTours = async (req, res) => {
   try {
-    // find() returns an array of JS converted objects
-    const tours = await Tour.find();
+    /**
+     * The req.query attribute holds an object of a query passed via a URL
+     *  - /api/v1/tours?duration=5&difficulty=easy
+     *
+     * The query being "?duration=5&difficulty=easy" in the path
+     *
+     * The returned object being:
+     *  - { duration: '5', difficulty: 'easy'}
+     *
+     * With this, Express allows us to really easily extract the key-value contents from a query (filter) in a URL path
+     *
+     * FILTERING
+     * There are 2 ways of going about this
+     *  1. MongoDB filtering object
+     *    Model.find( {_id: 15255...} )
+     *  2. Mongoose Query Object chaining methods
+     *    Model.find().where(key).equals(value).where()
+     *
+     * MongoDB Filtering Object
+     * This will return all tour documents within the collection that has a duration of 5 and a difficulty of easy
+     * Tour.find({ duration: 5, difficulty: "easy" })
+     *
+     * Mongoose Query Object
+     * The exact same filter as the one above, but using Mongoose Driver code instead
+     * Tour.find().where("duration").equals(5).where("difficulty").equals("easy")
+     *
+     * QUERY
+     * The query object in Mongoose is not a promise but rather implements the promise interface of thenable and catchable
+     *
+     * When we use the find() method it returns a query object which we can use methods from its prototype to get filtering done
+     *
+     * For use to complex querying like sorting, limiting, pagination etc..., we must do them before we actually await the query object
+     *
+     * WHY?
+     * When you use the await operator on a Query object, it will execute the query itself, thus not allowing us to run any chain methods on it - ultimately not being able to sort the query
+     */
+    // console.log(req.query);
 
+    // find() returns an array of JS converted objects
+    // using MongoDB method, because req.query returns a object of key-value pairs
+    // BUILD QUERY
+    const queryObj = { ...req.query };
+    const excludeFields = ['page', 'sort', 'limit', 'fields'];
+    excludeFields.forEach((el) => delete queryObj[el]);
+
+    const query = Tour.find(queryObj);
+
+    // EXECUTE QUERY
+    const tours = await query;
+
+    // SEND RESPONSE
     res.status(200).json({
       status: 'success',
       results: tours.length,
