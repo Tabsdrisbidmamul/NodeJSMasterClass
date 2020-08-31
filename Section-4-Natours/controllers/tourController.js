@@ -77,12 +77,87 @@ exports.getAllTours = async (req, res) => {
 
     // find() returns an array of JS converted objects
     // using MongoDB method, because req.query returns a object of key-value pairs
-    // BUILD QUERY
-    const queryObj = { ...req.query };
+
+    /* BUILD QUERY */
+    // FILTERING
+    const queryObj = { ...req.query }; // make a deep-copy
     const excludeFields = ['page', 'sort', 'limit', 'fields'];
     excludeFields.forEach((el) => delete queryObj[el]);
 
-    const query = Tour.find(queryObj);
+    // ADVANCED FILTERING - pagination, sorting, limiting and fields...
+    const queryStr = JSON.stringify(queryObj).replace(
+      /\b(gte?|lte?)\b/g,
+      (match) => `$${match}`
+    );
+
+    // FILTER ON ALL THE RESULTS RETRIEVED
+
+    let query;
+    if (process.env.NODE_ENV === 'development') {
+      query = Tour.find(JSON.parse(queryStr), { __v: 0 });
+    } else if (process.env.NODE_ENV === 'production') {
+      query = Tour.find(JSON.parse(queryStr), { __v: 0, _id: 0 });
+    }
+
+    /**
+     * HOW TO ADVANCE FILTER (SORT, LIMIT, FIELDS, PAGINATION)
+     * At the top, we looped over the excludeFields array, and deleted the key-value pairs that matched the values in excludeFields, this was because we wanted to target these fields individually.
+     *
+     * HOW TO DO IT?
+     * We are simply doing basic if-else blocks that see if the key page or field or sort or pagination we passed in the original query
+     *  - on req.query[.field]
+     *
+     * IF SO
+     * Mongoose actually likes to work with a string that has each search value delimited with a space, so we always want to split the string into an array using (.split(',') on the string) with its delimited value as a comma
+     *
+     * Then join the array back into a String with a space between each keyword (.join(' '))
+     *
+     * Then we pass that searchObject into query = query[.sort/select/] -> each of these method returns the Query Object back with the filtered (refined) values from the search
+     */
+
+    // SORTING
+    if (req.query.sort) {
+      /**
+       * SORTING
+       * If we pass the query
+       *  - sort=price
+       * Mongoose will sort on set of results on the price attribute in ascending (ASC) order
+       *
+       * ASC ORDER
+       * We pass in a positive value for the sort value
+       *  - sort=price
+       *
+       * DESC ORDER
+       * We pass in a negative value for the sort value
+       * The price has a minus (-) in-front of it, telling mongoose this is to be sorted in DESC ORDER
+       *  - sort=-price
+       *
+       *
+       */
+      const sortBy = req.query.sort.split(',').join(' ');
+      query = query.sort(sortBy);
+    } else {
+      query = query.sort('-createdAt');
+    }
+
+    // FIELD LIMITING (PROJECTION - SAME AS SELECT IN SQL)
+    /**
+     * + (PLUS) (DEFAULT)
+     * Will include the fields listed within the projection
+     *
+     * - (MINUS)
+     * Will exclude the stated fields from the results that will be displayed from running the query
+     */
+    if (req.query.fields) {
+      const fields = req.query.fields.split(',').join(' ');
+      // fields = `${fields} -__v`;
+      query = query.select(fields);
+    } else {
+      /**
+       * The __v is used internally by Mongo, it is a not a good idea to remove it, rather hide it from the user by excluding it always from the search
+       */
+      query = query.select('-__v');
+    }
 
     // EXECUTE QUERY
     const tours = await query;

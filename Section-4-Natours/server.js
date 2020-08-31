@@ -113,5 +113,7 @@ app.listen(port, () => {
 /**
  * CONNECT MONGO ON TERMINAL
  * mongo "mongodb+srv://cluster0.urnf4.mongodb.net/Natours" --username Idris
+ *
+ * CONNECT MONGO ON MONGODB
  * mongodb+srv://Idris:NwtZdfUhcHn794N@cluster0.urnf4.mongodb.net/Natours?
  */

@@ -57,15 +57,18 @@ const tourSchema = new mongoose.Schema(
       required: [true, 'A tour must have a image cover'],
     },
     images: [String],
-    /* { timestamps: true } : creates 2 fields createdAt and UpdatedAt fields for us down below is hot make them manually
+    /* { timestamps: true } : creates 2 fields createdAt and UpdatedAt fields for us down below is how make them manually
+
+    To hide fields permanently, we can do so in the schema, by having the select field set to false
      */
-    // createdAt: {
-    //   type: Date,
-    //   default: Date.now(),
-    // },
+    createdAt: {
+      type: Date,
+      default: Date.now(),
+      select: false,
+    },
     startDates: [Date],
-  },
-  { timestamps: true }
+  }
+  // { timestamps: true }
 );
 
 /**
