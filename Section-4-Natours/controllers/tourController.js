@@ -89,15 +89,14 @@ exports.getAllTours = async (req, res) => {
       /\b(gte?|lte?)\b/g,
       (match) => `$${match}`
     );
-
     // FILTER ON ALL THE RESULTS RETRIEVED
 
-    let query;
-    if (process.env.NODE_ENV === 'development') {
-      query = Tour.find(JSON.parse(queryStr), { __v: 0 });
-    } else if (process.env.NODE_ENV === 'production') {
-      query = Tour.find(JSON.parse(queryStr), { __v: 0, _id: 0 });
-    }
+    let query = Tour.find(JSON.parse(queryStr));
+    // if (process.env.NODE_ENV === 'development') {
+    //   query = Tour.find(JSON.parse(queryStr), { __v: 0 });
+    // } else if (process.env.NODE_ENV === 'production') {
+    //   query = Tour.find(JSON.parse(queryStr), { __v: 0, _id: 0 });
+    // }
 
     /**
      * HOW TO ADVANCE FILTER (SORT, LIMIT, FIELDS, PAGINATION)
@@ -159,6 +158,40 @@ exports.getAllTours = async (req, res) => {
       query = query.select('-__v');
     }
 
+    // PAGINATION
+    /**
+     * Pagination comes with selectors we need to work with
+     *  - page: the page the user wants to retrieve
+     *  - limit: how many results are retrieved, then be displayed in the UI
+     *
+     * In Mongoose we use skip() and limit() methods to do so
+     *
+     * limit()
+     * The integer value passed, will tell Mongo to return x amount of results from the query
+     *
+     * skip()
+     * This will move the pointer to the argument offset that is passed to the function, so MongoDB will always read from position 0, but if a user requests page 3, then we want results from 21-30 (assuming that the limit is 10), thus moving the pointer to offset 21 and read up to 30.
+     *
+     * ERROR HANDLING
+     * We do some basic error handling where we check the page (skip pointer) entered is not greater than the results that we have
+     *
+     * We use the method countDocuments() where we can pass a query into it to count all the results that are found in that query
+     *
+     * countDocuments()
+     * when nothing is passed it will count all the documents in the collection, that is not what we want, but rather a resultSet that is the same that we have at the moment, thus we pass in a queryString to solve that problem
+     *
+     */
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
+    const skip = (page - 1) * limit;
+
+    query = query.skip(skip).limit(limit);
+
+    if (req.query.page) {
+      const numTours = await Tour.countDocuments(JSON.parse(queryStr));
+      if (numTours <= skip) throw new Error('This page does not exist');
+    }
     // EXECUTE QUERY
     const tours = await query;
 
