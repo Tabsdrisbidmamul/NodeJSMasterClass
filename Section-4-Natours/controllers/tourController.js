@@ -352,6 +352,28 @@ exports.deleteTour = async (req, res) => {
  * 
  * MULTIPLE OPERATORS
  * We can use the same aggregate object again multiple times within the aggregate pipeline, so we can $match at the top and at the end - to say we want to exclude a piece of data from final output for example
+ * 
+ * $push
+ * This operator acts as an array, so it will push the value (the field specified to the array)
+ *  - tours: { $push: '$name' },
+ * 
+ * $addFields
+ * Allows us to add fields to the final output of the pipeline - the key is the new field name, and the value can be an existing field
+ *  - $addFields: { month: '$_id' },
+ * 
+ * $project
+ * This allows to hide ot show fields in the final output
+ *  - 1: show
+ *  - 0: hide
+ * 
+ *  - $project: {
+          _id: 0,
+        },
+ *
+ * $limit
+ * Just like the filter queries, it will limit the number of documents that are shown in the final output
+ *  - $limit: 6,
+ * 
  */
 exports.getTourStats = async (req, res) => {
   try {
@@ -383,6 +405,63 @@ exports.getTourStats = async (req, res) => {
       message: 'Stats returned',
       data: {
         stats,
+      },
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'error',
+      message: {
+        errorMessage: err.message,
+        error: err,
+      },
+    });
+  }
+};
+
+exports.getMonthlyPlan = async (req, res) => {
+  try {
+    const year = Number(req.params.year); // 2021
+
+    const plan = await Tour.aggregate([
+      {
+        $unwind: '$startDates',
+      },
+      {
+        $match: {
+          startDates: {
+            $gte: new Date(`${year}-01-01`),
+            $lte: new Date(`${year}-12-31`),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: { $month: '$startDates' },
+          numTourStarts: { $sum: 1 },
+          tours: { $push: '$name' },
+        },
+      },
+      {
+        $addFields: { month: '$_id' },
+      },
+      {
+        $project: {
+          _id: 0,
+        },
+      },
+      {
+        $sort: { numTourStarts: -1 },
+      },
+      // {
+      //   $limit: 6,
+      // },
+    ]);
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Stats returned',
+      data: {
+        plan,
       },
     });
   } catch (err) {

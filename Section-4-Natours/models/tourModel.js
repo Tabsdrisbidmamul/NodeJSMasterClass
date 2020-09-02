@@ -67,9 +67,41 @@ const tourSchema = new mongoose.Schema(
       select: false,
     },
     startDates: [Date],
+  },
+  {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
   // { timestamps: true }
 );
+
+/**
+ * VIRTUALS
+ * These are fields within the Collection Schema that are not persistent - meaning, that they are not saved directly into the DB's hardware storage. They can be seen as almost as prototypes in JS - that every document has access to these helper functions - but are not actually part of the document itself - in turn saving storage space
+ * 
+ * HOW TO
+ * We usually add the virtuals after the creation of the schema - just like prototypes in JS objects
+ * 
+ *  - We use the virtual() method on the schema instance and the argument passed is the virtuals name in a String, 
+ * 
+ *  - We then use the get() method on the virtuals method (chaining methods) adn we pass in a callback function - written using the normal function was not using arrow function
+ * 
+ *  - Here we can compute statistical values and return them after use
+ *  - tourSchema.virtual('durationWeeks').get(function () {
+      return this.duration / 7;
+      });
+ *
+ * HAVE THEM OUTPUT WITH DOCUMENTS
+ * We have to pass in these options to the schema as its second argument
+ *  - {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
+ * 
+ */
+tourSchema.virtual('durationWeeks').get(function () {
+  return this.duration / 7;
+});
 
 /**
  * MODEL
@@ -84,6 +116,7 @@ const tourSchema = new mongoose.Schema(
  *
  * It is common to have the model variable as uppercase, to differentiate it as  class basically
  */
+
 const Tour = mongoose.model('Tour', tourSchema);
 
 module.exports = Tour;
