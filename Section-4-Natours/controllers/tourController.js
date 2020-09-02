@@ -35,6 +35,53 @@ const Tour = require('../models/tourModel');
 }; */
 
 // ROUTING HANDLERS
+exports.aliasTopTours = (req, res, next) => {
+  /**
+   * ALIAS (PRE-FILLING)
+   * This technique is to make a really long, complex or commonly used query and essentially relate it to an alias - so what the user has to press to search up is human-readable and not an amalgamation of queries that is hard to read
+   *
+   * Here we want to turn this query
+   *  - limit=5&sort=-ratingsAverage,price&fields=name,price,ratingsAverage,summary,difficulty
+   *
+   * Into this
+   *  - /top-5-cheap
+   *
+   * MIDDLEWARE ALIAS
+   * What we actually do is to make a middleware that is ran before the actual router middleware runs - so this can be seen as a helper middleware that fills parts of the path (URL) by pre-filling or adding the necessary parts to the URL so when the router middleware is ran - it literally will be running a pre-filled URL that we wrote
+   *
+   */
+
+  // limit=5&sort=-ratingsAverage,price&fields=name,price,ratingsAverage,summary,difficulty
+
+  req.query.limit = '5';
+  req.query.sort = '-ratingsAverage,price';
+  req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
+  next();
+};
+
+class APIFeatures {
+  constructor(query, queryString) {
+    this.query = query;
+    this.queryString = queryString;
+  }
+
+  filter() {
+    const queryObj = { ...this.queryString }; // make a deep-copy
+    const excludeFields = ['page', 'sort', 'limit', 'fields'];
+    excludeFields.forEach((el) => delete queryObj[el]);
+
+    // ADVANCED FILTERING - pagination, sorting, limiting and fields...
+    const queryStr = JSON.stringify(queryObj).replace(
+      /\b(gte?|lte?)\b/g,
+      (match) => `$${match}`
+    );
+
+    // FILTER ON ALL THE RESULTS RETRIEVED
+    this.query.find(JSON.parse(queryStr));
+    // let query = Tour.find(JSON.parse(queryStr));
+  }
+}
+
 exports.getAllTours = async (req, res) => {
   try {
     /**
@@ -80,18 +127,18 @@ exports.getAllTours = async (req, res) => {
 
     /* BUILD QUERY */
     // FILTERING
-    const queryObj = { ...req.query }; // make a deep-copy
-    const excludeFields = ['page', 'sort', 'limit', 'fields'];
-    excludeFields.forEach((el) => delete queryObj[el]);
+    // const queryObj = { ...req.query }; // make a deep-copy
+    // const excludeFields = ['page', 'sort', 'limit', 'fields'];
+    // excludeFields.forEach((el) => delete queryObj[el]);
 
-    // ADVANCED FILTERING - pagination, sorting, limiting and fields...
-    const queryStr = JSON.stringify(queryObj).replace(
-      /\b(gte?|lte?)\b/g,
-      (match) => `$${match}`
-    );
-    // FILTER ON ALL THE RESULTS RETRIEVED
+    // // ADVANCED FILTERING - pagination, sorting, limiting and fields...
+    // const queryStr = JSON.stringify(queryObj).replace(
+    //   /\b(gte?|lte?)\b/g,
+    //   (match) => `$${match}`
+    // );
+    // // FILTER ON ALL THE RESULTS RETRIEVED
 
-    let query = Tour.find(JSON.parse(queryStr));
+    // let query = Tour.find(JSON.parse(queryStr));
     // if (process.env.NODE_ENV === 'development') {
     //   query = Tour.find(JSON.parse(queryStr), { __v: 0 });
     // } else if (process.env.NODE_ENV === 'production') {
@@ -193,7 +240,8 @@ exports.getAllTours = async (req, res) => {
       if (numTours <= skip) throw new Error('This page does not exist');
     }
     // EXECUTE QUERY
-    const tours = await query;
+    const features = new APIFeatures(Tour.find(), req.query).filter();
+    const tours = await features.query;
 
     // SEND RESPONSE
     res.status(200).json({

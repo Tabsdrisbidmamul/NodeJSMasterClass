@@ -12,6 +12,20 @@ const router = express.Router();
  *  - .post(tourController.checkBody, tourController.createTour);
  */
 
+// ROUTE: /api/v1/tours
+
+/**
+ * ALIAS ROUTE
+ * We have to place any alias or routes that we do not expect an id lookup or user placing a variable into the route at the
+ *  - TOP
+ *  - BEFORE VARIABLE ROUTES
+ *
+ * That is because Express will think that it is an id lookup or variable route
+ */
+router
+  .route('/top-5-cheap')
+  .get(tourController.aliasTopTours, tourController.getAllTours);
+
 router
   .route('/')
   .get(tourController.getAllTours)

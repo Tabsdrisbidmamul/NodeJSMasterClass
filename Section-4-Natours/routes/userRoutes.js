@@ -1,8 +1,10 @@
 const express = require('express');
-const userController = require('./../controllers/userController');
+const userController = require('../controllers/userController');
 
 // ROUTING
 const router = express.Router();
+
+// ROUTE: /api/v1/users
 
 router
   .route('/')
