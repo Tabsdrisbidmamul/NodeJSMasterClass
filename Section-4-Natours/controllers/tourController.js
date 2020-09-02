@@ -1,4 +1,5 @@
 const Tour = require('../models/tourModel');
+const APIFeatures = require('../utils/apifeatures');
 
 /**
  * Error Handling using the Middleware stack
@@ -59,29 +60,6 @@ exports.aliasTopTours = (req, res, next) => {
   next();
 };
 
-class APIFeatures {
-  constructor(query, queryString) {
-    this.query = query;
-    this.queryString = queryString;
-  }
-
-  filter() {
-    const queryObj = { ...this.queryString }; // make a deep-copy
-    const excludeFields = ['page', 'sort', 'limit', 'fields'];
-    excludeFields.forEach((el) => delete queryObj[el]);
-
-    // ADVANCED FILTERING - pagination, sorting, limiting and fields...
-    const queryStr = JSON.stringify(queryObj).replace(
-      /\b(gte?|lte?)\b/g,
-      (match) => `$${match}`
-    );
-
-    // FILTER ON ALL THE RESULTS RETRIEVED
-    this.query.find(JSON.parse(queryStr));
-    // let query = Tour.find(JSON.parse(queryStr));
-  }
-}
-
 exports.getAllTours = async (req, res) => {
   try {
     /**
@@ -127,18 +105,7 @@ exports.getAllTours = async (req, res) => {
 
     /* BUILD QUERY */
     // FILTERING
-    // const queryObj = { ...req.query }; // make a deep-copy
-    // const excludeFields = ['page', 'sort', 'limit', 'fields'];
-    // excludeFields.forEach((el) => delete queryObj[el]);
 
-    // // ADVANCED FILTERING - pagination, sorting, limiting and fields...
-    // const queryStr = JSON.stringify(queryObj).replace(
-    //   /\b(gte?|lte?)\b/g,
-    //   (match) => `$${match}`
-    // );
-    // // FILTER ON ALL THE RESULTS RETRIEVED
-
-    // let query = Tour.find(JSON.parse(queryStr));
     // if (process.env.NODE_ENV === 'development') {
     //   query = Tour.find(JSON.parse(queryStr), { __v: 0 });
     // } else if (process.env.NODE_ENV === 'production') {
@@ -161,86 +128,19 @@ exports.getAllTours = async (req, res) => {
      * Then we pass that searchObject into query = query[.sort/select/] -> each of these method returns the Query Object back with the filtered (refined) values from the search
      */
 
+    // MOVED TO APIFeatures
     // SORTING
-    if (req.query.sort) {
-      /**
-       * SORTING
-       * If we pass the query
-       *  - sort=price
-       * Mongoose will sort on set of results on the price attribute in ascending (ASC) order
-       *
-       * ASC ORDER
-       * We pass in a positive value for the sort value
-       *  - sort=price
-       *
-       * DESC ORDER
-       * We pass in a negative value for the sort value
-       * The price has a minus (-) in-front of it, telling mongoose this is to be sorted in DESC ORDER
-       *  - sort=-price
-       *
-       *
-       */
-      const sortBy = req.query.sort.split(',').join(' ');
-      query = query.sort(sortBy);
-    } else {
-      query = query.sort('-createdAt');
-    }
 
     // FIELD LIMITING (PROJECTION - SAME AS SELECT IN SQL)
-    /**
-     * + (PLUS) (DEFAULT)
-     * Will include the fields listed within the projection
-     *
-     * - (MINUS)
-     * Will exclude the stated fields from the results that will be displayed from running the query
-     */
-    if (req.query.fields) {
-      const fields = req.query.fields.split(',').join(' ');
-      // fields = `${fields} -__v`;
-      query = query.select(fields);
-    } else {
-      /**
-       * The __v is used internally by Mongo, it is a not a good idea to remove it, rather hide it from the user by excluding it always from the search
-       */
-      query = query.select('-__v');
-    }
 
     // PAGINATION
-    /**
-     * Pagination comes with selectors we need to work with
-     *  - page: the page the user wants to retrieve
-     *  - limit: how many results are retrieved, then be displayed in the UI
-     *
-     * In Mongoose we use skip() and limit() methods to do so
-     *
-     * limit()
-     * The integer value passed, will tell Mongo to return x amount of results from the query
-     *
-     * skip()
-     * This will move the pointer to the argument offset that is passed to the function, so MongoDB will always read from position 0, but if a user requests page 3, then we want results from 21-30 (assuming that the limit is 10), thus moving the pointer to offset 21 and read up to 30.
-     *
-     * ERROR HANDLING
-     * We do some basic error handling where we check the page (skip pointer) entered is not greater than the results that we have
-     *
-     * We use the method countDocuments() where we can pass a query into it to count all the results that are found in that query
-     *
-     * countDocuments()
-     * when nothing is passed it will count all the documents in the collection, that is not what we want, but rather a resultSet that is the same that we have at the moment, thus we pass in a queryString to solve that problem
-     *
-     */
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
 
-    const skip = (page - 1) * limit;
-
-    query = query.skip(skip).limit(limit);
-
-    if (req.query.page) {
-      const numTours = await Tour.countDocuments(JSON.parse(queryStr));
-      if (numTours <= skip) throw new Error('This page does not exist');
-    }
     // EXECUTE QUERY
-    const features = new APIFeatures(Tour.find(), req.query).filter();
+    const features = new APIFeatures(Tour.find(), req.query)
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate();
     const tours = await features.query;
 
     // SEND RESPONSE
@@ -356,6 +256,134 @@ exports.deleteTour = async (req, res) => {
       status: 'success',
       message: 'Tour Deleted',
       data: null,
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'error',
+      message: {
+        errorMessage: err.message,
+        error: err,
+      },
+    });
+  }
+};
+
+/**
+ * AGGREGATION PIPELINE (SQL GROUPING)
+ * This pipeline allows us compute say a series of documents and return 1 result back.
+ *
+ * This is pretty much the same in SQL where we group data together, so with this pipeline we can say get the average salary or age etc.. from a collection (TABLE) by processing each document (ROW) and only looking at those documents that meet our criteria
+ *
+ * HOW TO AGGREGATE
+ * We specify the collection we looking to group documents, and call the aggregate function on it, this function accepts an array of aggregate objects (can be found on MongoDB Manual Reference on Aggregation pipeline)
+ * 
+ * In pretty much of all of Mongo and Mongoose, we normally will await the result from the method call
+ * 
+ * .aggregate([]) will want to return a Aggregate Object, so we must when calling it await it
+ *
+ * db.<collection>.aggregate([])
+ *  - await Tour.aggregate([])
+ *
+ * AGGREGATE PIPELINE - HOW IT WORKS
+ * Just like the request-response cycle, the aggregation pipeline will pass a user request down through the aggregation pipeline - one after the other - refining and cutting down the number of results that are returned back - till the pipeline finally gets its results and will essentially return the value that we have asked for (so MIN, MAX, AVG etc.. on quantifiable fields within a document (record))
+ *
+ * AGGREGATE OBJECT - HOW TO DO IT
+ * Within the array, is where we place the aggregate objects, which will process each request through its query
+ * 
+ * They are simply queries or filters that we did when reading or updating a document.
+ * 
+ * SYNTAX
+ * We must enclose the aggregate around a set of curly braces and use one of the many aggregate objects that are predefined in MongoDB, just like the filter, we then have the value set to an object which we do the filtering - so to cut down or filter the documents that we want to actually group by
+ *  - {
+        $match: { ratingsAverage: { $gte: 4.5 } },
+      },
+ *
+ * FIELDS
+ * When we want to refer to a field we wrote in the schema, we must enclose the file name with single quotes and prepend its name with a dollar sign ($), that is how the aggregation pipeline does it
+ *
+ * MATCH (SQL SELECT)
+ * The document that we want to group essentially are first passed through the match object
+ * 
+ * Just like a filter, we want the documents that are relaxant to the filter that we want
+ *  - {
+        $match: { ratingsAverage: { $gte: 4.5 } },
+      },
+ *
+ *
+ * GROUP (SQL GROUPBY)
+ * This will group the documents together by the matching done up at the top and the _id passed - if you only want the documents to be done by the match done before, then set the _id: null
+ * 
+ * If you want to group by a particular _id, for example your pre-written id followed by Mongo's id, you can do so _id: '$cust_id'
+ * 
+ * If you want to group by to a particular field - then you simple pass in the '$<field_name> and Mongo will group all the results on that field
+ * 
+ * EXAMPLE
+ * We want the the minimum, maximum and average price in all the three difficulties (easy, medium and hard)
+ * 
+ * SOLUTION
+ * We group the data based on the difficulty 
+ *  - _id: '$difficulty'
+ * 
+ * And pass in the aggregate objects for the min, max and avg for the price fields, and that's it
+ * 
+ * 
+ * So here we can pass in the GROUPING functions to this (MIN, MAX, AVG etc..)
+ * 
+ * USING GROUPING FUNCTIONS
+ * we define the filed name as the key, and its value will be equal to one of the pre-defined MongoDB aggregation functions (GROUPING FUNCTIONS in this case) and its value should be equal to a field that we want to process - it is written in single quotes and its prepended with a dollar sign ($) then the field name
+ * 
+ *  - $group: {
+          _id: null,
+          avgRating: { $avg: '$ratingsAverage' },
+          avgPrice: { $avg: '$price' },
+        },
+ *
+ * This line of code is quite special, the aggregation pipeline will actually add 1 for every document being passed through the pipeline - this is actually getting the sum of the number of documents within the collection
+ *  - numTours: { $sum: 1 },
+ * 
+ * SORT
+ * If we want to sort the returned data, we then use the $sort aggregate object, and the filed names you wish to sort on, are the filed names that were defined in the $group aggregate - not the field names in the schema - because the returned data can be seen as a new collection of sorts (not really, but it is easier to explain it this way - just like in SQL does)
+ * 
+ * The value you set equal to can be 1, -1
+ *  - 1 - ASC
+ *  - -1 - DESC
+ * 
+ *  - $sort: { avgPrice: 1 },
+ * 
+ * MULTIPLE OPERATORS
+ * We can use the same aggregate object again multiple times within the aggregate pipeline, so we can $match at the top and at the end - to say we want to exclude a piece of data from final output for example
+ */
+exports.getTourStats = async (req, res) => {
+  try {
+    const stats = await Tour.aggregate([
+      {
+        $match: { ratingsAverage: { $gte: 4.5 } },
+      },
+      {
+        $group: {
+          _id: '$difficulty',
+          numTours: { $sum: 1 },
+          numRatings: { $sum: '$ratingsQuantity' },
+          avgRating: { $avg: '$ratingsAverage' },
+          avgPrice: { $avg: '$price' },
+          minPrice: { $min: '$price' },
+          maxPrice: { $min: '$price' },
+        },
+      },
+      {
+        $sort: { avgPrice: 1 },
+      },
+      // {
+      //   $match: { _id: { $ne: 'easy' } },
+      // },
+    ]);
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Stats returned',
+      data: {
+        stats,
+      },
     });
   } catch (err) {
     res.status(400).json({
