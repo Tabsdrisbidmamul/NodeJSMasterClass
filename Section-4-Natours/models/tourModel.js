@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
+const validator = require('validator');
 
 /**
  * SCHEMA
@@ -11,6 +12,71 @@ const slugify = require('slugify');
  * type:= we can have the type simply equal to Javascript basic data types, but to customize, we wrap it around an object and give those attributes truthy/falsy values
  */
 
+/**
+ * VALIDATION AND SANITIZATION
+ * Validating the data is a must to ensure that we don't have Strings where an Integer should be in the document Schema or we will run into errors
+ *
+ * Sanitizing the data, we must never ever accept user input direct and commit it to the DB
+ *
+ * VALIDATION
+ * Checking for the user input:
+ *  - right format for the each field according to the document schema
+ *  - all the required fields are completed
+ *
+ * SANITIZATION
+ * To ensure that:
+ *  - inputted data is clean - no malicious code
+ *    - removing unwanted characters or even code from the input fields
+ *
+ * HOW TO
+ * Mongoose supplies built-in validators for different data types
+ * all schema fields can have required added to them
+ *
+ * we specify the field name:
+ *  - being a key called required
+ *  - Its value is an array with two items:
+ *    - true and a String that will be its error message
+ *
+ *  - required: [true, 'A tour must have a name']
+ *
+ * SYNTAX
+ * validateName: {
+ *  values: [],
+ *  message: ''
+ * }
+ *
+ *  SHORTHAND
+ *
+ * validateName: [value, message]
+ *
+ * String
+ *  - minlength
+ *  - maxlength
+ *
+ * Numbers
+ *  - min
+ *  - max
+ * 
+ * CUSTOM VALIDATORS
+ * We can write our validators by using setting a function to the key named validate
+ * 
+ * The function has access to the current value that was passed to the field in the schema, and the function is simply a predicate that it must return a true or false
+ * 
+ * The 'this' refers to a newly created document, and not to an existing one
+ * 
+ * *INTERNAL TO MONGOOSE {VALUE} IS THE VALUE *
+ * 
+ *  - validate: [
+        function (val) {
+          return val < this.price;
+        },
+        'Discounted price {VALUE} is greater than the actual price',
+      ],
+ * 
+ * 
+ * 
+ */
+
 const tourSchema = new mongoose.Schema(
   {
     name: {
@@ -18,6 +84,14 @@ const tourSchema = new mongoose.Schema(
       required: [true, 'A tour must have a name'],
       unique: true,
       trim: true,
+      maxlength: [40, 'A tour name must not have a maximum of 40 characters'],
+      minlength: [10, 'A tour name must have at least 10 characters'],
+      validate: [
+        function (val) {
+          return validator.isAlpha(val.split(' ').join(''));
+        },
+        'A tour name must only contain letters',
+      ],
     },
     slug: String,
     duration: {
@@ -31,10 +105,16 @@ const tourSchema = new mongoose.Schema(
     difficulty: {
       type: String,
       required: [true, 'A tour must have a difficulty'],
+      enum: {
+        values: ['easy', 'medium', 'difficult'],
+        message: 'Difficulty is either: easy, medium or difficult',
+      },
     },
     ratingsAverage: {
       type: Number,
       default: 4.5,
+      min: [1, 'Rating must be greater than 1.0'],
+      max: [5, 'Rating must be lesser than 5.0'],
     },
     ratingsQuantity: {
       type: Number,
@@ -44,7 +124,15 @@ const tourSchema = new mongoose.Schema(
       type: Number,
       required: [true, 'A tour must have a price'],
     },
-    priceDiscount: Number,
+    priceDiscount: {
+      type: Number,
+      validate: [
+        function (val) {
+          return val < this.price;
+        },
+        'Discounted price {VALUE} is greater than the actual price',
+      ],
+    },
     summary: {
       type: String,
       trim: true,
