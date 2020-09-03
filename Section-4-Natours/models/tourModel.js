@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const slugify = require('slugify');
 
 /**
  * SCHEMA
@@ -18,6 +19,7 @@ const tourSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
+    slug: String,
     duration: {
       type: Number,
       required: [true, 'A tour must have a duration'],
@@ -67,6 +69,11 @@ const tourSchema = new mongoose.Schema(
       select: false,
     },
     startDates: [Date],
+    secretTour: {
+      type: Boolean,
+      default: false,
+      select: false,
+    },
   },
   {
     toJSON: { virtuals: true },
@@ -101,6 +108,122 @@ const tourSchema = new mongoose.Schema(
  */
 tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
+});
+
+/**
+ * MONGOOSE MIDDLEWARE
+ * Just like in Express, Mongoose has middleware itself - and they are processed when the document is going to be saved and when it has been saved - they are also known as pre-hook and post-hook functions.
+ *
+ * There are 4 types of Mongoose Middleware
+ *  - DOCUMENT MIDDLEWARE
+ *  - QUERY MIDDLEWARE
+ *  - AGGREGATE MIDDLEWARE
+ *  - MODEL MIDDLEWARE
+ *
+ * Just Like Virtuals, we write middleware on the schema - the 'this' will refer to the currently processed document, query, aggregate or model
+ *
+ * Hence we use the normal function declaration and not the arrow function
+ *
+ * SYNTAX
+ * The <hooks> can almost be seen as events
+ * PRE HOOK
+ * modelSchema.pre(<hook>, function(next) {})
+ *
+ * POST HOOK
+ * modelSchema.post(<hook>, function(</hook><CURRENT_DOC|QUERY_DOCS|AGG|MODEL>, next) {})
+ *
+ * DOCUMENT MIDDLEWARE
+ * These middlewares can act on the currently processed document either before the event is going to happen (pre()) and after the event has happened (post())
+ *
+ * PRE
+ * Pre middleware function have access to the next() function, and just like in Express, this function is called and used to say that current middleware has finished processing and is passing the chain of command to the next middleware in the stack.
+ *
+ * POST
+ * Post middleware function has access to the current document that has just been processed by a pre - or simply gone thorough the stack - and the next() function as well.
+ *
+ * So we do not have access to the 'this' keyword but rather the parameter value of the document, We still can refer back to the processed object using this, however the unless there is something of use within the object that you left from the pre hook state, its best to work with the results that the object produced
+ *
+ * DOCUMENT - SAVE EVENT
+ * The save event will run before the .save() and .create() methods are ran - and this event will only be triggered for when the .save() and .create() methods are called
+ *
+ * It will not be triggered when .insertMany() is used or .insert()
+ *
+ * QUERY MIDDLEWARE
+ * These middleware, just like DOCUMENT MIDDLEWARE, will ran before and after certain events (A Query object being executed) have taken place
+ *
+ * QUERY - FIND EVENT
+ * This event is triggered when a Query object is being executed, but before it executes its knows from its Model that on the Schemas hook listeners that we have middleware that should run before a Query object gets executed
+ *
+ * In this event we have access to the current Query Object
+ *  - Tour.find()
+ *
+ * Looking back in the tourController, we chain several Queries method on it, and just like that we can also chain Query methods on it as well within the middleware, with this we can filter out the result set to show only public access certain parts of the DB and private access privileged parts of the DB Collection
+ *
+ * PROBLEMS
+ * With the hook event we listed
+ *  - tourSchema.pre('find', function (next) {...}
+ *
+ * This will only be triggered for when the .find() method is called, and not the other flavours of find methods
+ *  - findOne
+ *  - findMany
+ *
+ * This is not what we want, but rather we want this middleware to run for every find variation called, so we can pass in a regex into the hook param and target all variations of find methods.
+ *  - tourSchema.pre(/^find/, function (next)
+ *
+ * AGGREGATION MIDDLEWARE
+ * These middleware will only run when an Aggregate Object is being executed (when await is called)
+ *
+ * Here we have access to pre and post hooks as usual
+ *
+ * AGGREGATE HOOK
+ * This event is fired off when the aggregate() method called, and with this we have access to the aggregate pipeline - the array where we place the $group, $match operators
+ *
+ * In our case we want to make sure that private access DB components are not included in the aggregation, so what we have to do is exclude them from the result set, and we do this by placing a $match object before any other matches are ran.
+ *
+ * now the pipeline is simply an array of objects, so we can use a JS array method unshift to prepend the middleware match object to the array
+ *
+ * To access th pipeline, we use pipeline() method that exists on the Aggregate object
+ *  - this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
+ *
+ *
+ */
+
+// DOCUMENT MIDDLEWARE
+tourSchema.pre('save', function (next) {
+  this.slug = slugify(this.name, { lower: true });
+  next();
+});
+
+// tourSchema.pre('save', function (next) {
+//   console.log('Will save document...');
+//   next();
+// });
+
+// tourSchema.post('save', function (doc, next) {
+//   console.log(doc);
+//   next();
+// });
+
+// QUERY MIDDLEWARE
+// tourSchema.pre('find', function (next) {
+tourSchema.pre(/^find/, function (next) {
+  this.find({ secretTour: { $ne: true } });
+
+  this.start = Date.now();
+  next();
+});
+
+tourSchema.post(/^find/, function (docs, next) {
+  console.log(`Query took ${Date.now() - this.start} ms`);
+  // console.log(docs);
+  next();
+});
+
+// AGGREGATE MIDDLEWARE
+tourSchema.pre('aggregate', function (next) {
+  this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
+  // console.log(this);
+  next();
 });
 
 /**

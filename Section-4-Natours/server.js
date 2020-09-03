@@ -33,14 +33,13 @@ const DB = process.env.DATABASE.replace(
   .then((con) => console.log(con.connections));
  */
 
-mongoose
-  .connect(DB, {
-    useNewUrlParser: true,
-    useCreateIndex: true,
-    useFindAndModify: true,
-    useUnifiedTopology: true,
-  })
-  .then((con) => console.log(con.connections));
+mongoose.connect(DB, {
+  useNewUrlParser: true,
+  useCreateIndex: true,
+  useFindAndModify: true,
+  useUnifiedTopology: true,
+});
+// .then((con) => console.log(con.connections));
 
 /**
  * ENVIRONMENT VARIABLES
