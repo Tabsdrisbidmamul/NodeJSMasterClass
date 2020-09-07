@@ -135,4 +135,41 @@ app.use(express.static(`${__dirname}/public`));
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 
+/**
+ * ERROR HANDLING UNHANDLED ROUTES
+ * The routes we have defined are static - and a mix of dynamic here and there
+ * But we have no middleware that will handle routes that we have not defined (routes that the end-user can simply type whatever they want after the initial forward slash of our domain name ('/'))
+ *
+ *  - /api/tours/
+ *
+ * Express has a default error handler that will serve back HTML to say that the resource was not found - for this route
+ *
+ * As this project is an API we want to be sending back JSON at all times, so we can write some middleware that will handle the unhandled routes
+ *
+ * MIDDLEWARE STACK - ORDER MATTERS
+ * As mentioned in the middleware explanation - the order of where the middlewares are defined matters, the unhandled route handler middleware must be placed at the end of the middleware stack that we wrote
+ *
+ * WHY?
+ *  1. Express will pass this route down the middleware stack
+ *
+ * 2. If the route handlers that we wrote did not do anything with the request (i.e finish the request-response cycle), then we have a bad route in our hands
+ *
+ *  3. That means that the bad route has passed down to the very bottom of the stack - and it is where precisely an unhandled route middleware should be to take care of the bad route
+ *
+ * 4. If we placed our unhandled route middleware at the top of the stack, then the API will simply not work - because the unhandled route middleware will just finish off the request-response cycle at every request.
+ *
+ * app.all()
+ * We unhandled route middleware to handle all the HTTP methods, and writing the same middleware for different HTTP methods is not good (repeated code), that's where the .all() method comes in - where it essentially combines all the HTTP methods together and handles them all at the same time
+ *
+ * Just like normal, we write the middleware as if we did for any other response
+ *
+ */
+
+app.all('*', (req, res, next) => {
+  res.status(404).json({
+    status: 'fail',
+    message: `Can't find ${req.originalUrl} on this server!`,
+  });
+});
+
 module.exports = app;
