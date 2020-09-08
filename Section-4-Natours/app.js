@@ -1,6 +1,8 @@
 const express = require('express');
 const morgan = require('morgan');
 
+const AppError = require('./utils/appError');
+const globalErrorHandler = require('./controllers/errorController');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 
@@ -165,11 +167,42 @@ app.use('/api/v1/users', userRouter);
  *
  */
 
+// UNHANDLED ROUTE ERROR MIDDLEWARE
 app.all('*', (req, res, next) => {
-  res.status(404).json({
-    status: 'fail',
-    message: `Can't find ${req.originalUrl} on this server!`,
-  });
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 400));
 });
+
+/**
+ * GLOBAL ERROR HANDLER
+ * There are 2 types of errors that we can have
+ *  - operational errors
+ *  - programming errors
+ *
+ * OPERATIONAL ERRORS
+ * These are problems that we can predict that will happen when running the application - so we just have to handle them in advanced
+ *  - invalid path accessed
+ *  - invalid user input
+ *  - failed to connect to the server
+ *  - failed to connect to the DB
+ *  - ...
+ *
+ * PROGRAMMING ERRORS
+ * These are errors that we as developers introduce into the code
+ *  - reading properties of undefined variables
+ *  - parsing a number on where an object is expected
+ *  - using await without async
+ *  - ...
+ *
+ * In Express we want to have all the errors be passed down to a
+ *  - 'Global Error Handler Middleware'
+ *
+ * So essentially we have one centralized place where all exceptions will be passed down to, and the handler will decide what to do with it
+ *
+ *
+ *
+ */
+
+// GLOBAL ERROR HANDLER MIDDLEWARE
+app.use(globalErrorHandler);
 
 module.exports = app;

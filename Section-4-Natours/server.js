@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 
+process.on('uncaughtException', (err) => {
+  console.log('UNHANDLED REJECTION! Shutting down...');
+  console.log(err.name, err.message);
+  process.exit(1);
+});
+
 dotenv.config({ path: './config.env' });
 const app = require('./app');
 
@@ -91,8 +97,38 @@ mongoose.connect(DB, {
 
 // START SERVER
 const port = process.env.PORT || 3000;
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`App running on port ${port}...`);
+});
+
+/**
+ * PROCESS EVENTS
+ * We can listen for events where the app has thrown an unhandledRejection - which is a promise that was rejected - this method is seen as a last safety net where we as programmers have left one last error handler that will catch exceptions that we do expect and not
+ *
+ * on() EVENTS ASYNCHRONOUS CODE
+ * We can listen for events on the process using the on() method, passing in the event that we are listening for and a callback function will be executed when that happens
+ *
+ * CASE - DB CONNECTION FAILED
+ * In this example we want to essentially log to the console that error message, and close the server using the close() method when we start listening on the port with our app
+ *
+ * This is known as graceful close - and will only close the server once all pending requests and responses have finished, and within the that method we pass in a callback where we want the actual application to end itself using process.exit(1) {code 0: successful code 1: fail}
+ *
+ * SYNCHRONOUS EXCEPTIONS
+ * These are cases like:
+ *  - console.log(variableName) - which is not declared
+ *
+ * This will make are application crash and leave it in an unclean state
+ * In this case what we really want is to kill the application (the application will be stuck here anyway) and restart it
+ *
+ * This handler should be at the very top most of the code (synchronous is always at the top-level) because if we declare further down the code - then the application will not compile itself to those lines of codes, and essentially always be stuck at that uncaughtException
+ */
+
+process.on('unhandledRejection', (err) => {
+  console.log('UNHANDLED REJECTION! Shutting down...');
+  console.log(err.name, err.message);
+  server.close(() => {
+    process.exit(1);
+  });
 });
 
 /**
