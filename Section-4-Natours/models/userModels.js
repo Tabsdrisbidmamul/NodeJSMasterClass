@@ -6,7 +6,7 @@ const userSchema = mongoose.Schema({
     type: String,
     required: [true, 'A user must have a name'],
     maxlength: [30, 'You cannot enter more than 30 characters for a username'],
-    minlength: [10, 'You must enter more than 10 characters for a username'],
+    minlength: [5, 'You must enter more than 10 characters for a username'],
   },
 
   email: {
@@ -26,12 +26,12 @@ const userSchema = mongoose.Schema({
   password: {
     type: String,
     required: [true, 'You must supply a password'],
-    minlength: [8, 'A password must be longer than 8 characters'],
-    validate: [
-      function (val) {
-        return RegExp(val).test(/^[\w@!$£%^&*+]+$/);
-      },
-    ],
+    minlength: [5, 'A password must be longer than 5 characters'],
+    // validate: [
+    //   function (val) {
+    //     return RegExp(val).test(/[\w@!$£%^&*+]+/);
+    //   },
+    // ],
   },
 
   passwordConfirm: {
