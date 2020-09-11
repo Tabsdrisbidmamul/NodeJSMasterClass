@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
+const bcryptjs = require('bcryptjs');
 
 const userSchema = mongoose.Schema({
   name: {
@@ -27,11 +28,13 @@ const userSchema = mongoose.Schema({
     type: String,
     required: [true, 'You must supply a password'],
     minlength: [5, 'A password must be longer than 5 characters'],
-    // validate: [
-    //   function (val) {
-    //     return RegExp(val).test(/[\w@!$£%^&*+]+/);
-    //   },
-    // ],
+    validate: [
+      function (val) {
+        const regex = RegExp('^[-\\w@!$£%^&*+]+$');
+        return regex.test(val);
+      },
+      'Non-special characters are not allowed, please use a mix of letters and numbers',
+    ],
   },
 
   passwordConfirm: {
@@ -44,7 +47,21 @@ const userSchema = mongoose.Schema({
       },
       'Your password does not match the one you entered',
     ],
+    select: false,
   },
+});
+
+userSchema.pre('save', async function (next) {
+  // Only run when password was modified
+  if (!this.isModified('password')) return next();
+
+  // hash and salt password with cost of 12
+  this.password = await bcryptjs.hash(this.password, 12);
+
+  // delete password confirm field
+  this.passwordConfirm = undefined;
+
+  next();
 });
 
 const User = mongoose.model('User', userSchema);
