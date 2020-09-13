@@ -35,6 +35,7 @@ const userSchema = mongoose.Schema({
       },
       'Non-special characters are not allowed, please use a mix of letters and numbers',
     ],
+    select: false,
   },
 
   passwordConfirm: {
@@ -49,6 +50,9 @@ const userSchema = mongoose.Schema({
     ],
     select: false,
   },
+
+  // Field is only given to a user when they have changed their password, if not this field will not exist in the user document
+  passwordChangedAt: Date,
 });
 
 userSchema.pre('save', async function (next) {
@@ -63,6 +67,31 @@ userSchema.pre('save', async function (next) {
 
   next();
 });
+
+/**
+ * INSTANCE METHODS
+ * Like Java static methods, these methods are available to all documents in the schema, allowing us to essentially write utility or helper functions that should only act within the schema data and help us the programmer to answer questions about user input:
+ *
+ * EXAMPLE
+ * Logging in:
+ *  - IS the inputted password the same as the user password?
+ *
+ *
+ */
+
+userSchema.methods.correctPassword = async function (
+  inputPassword,
+  userPassword
+) {
+  return await bcryptjs.compare(inputPassword, userPassword);
+};
+
+userSchema.methods.modifiedPassword = async function (JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    console.log(this.passwordChangedAt, JWTTimestamp);
+  }
+  return false;
+};
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;

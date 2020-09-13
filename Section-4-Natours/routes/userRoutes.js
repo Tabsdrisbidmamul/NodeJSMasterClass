@@ -1,12 +1,14 @@
 const express = require('express');
 const userController = require('../controllers/userController');
-const authController = require('../controllers/authenticaionController');
+const authController = require('../controllers/authController');
 
 // ROUTING
 const router = express.Router();
 
 // ROUTE: /api/v1/users/sign-up
+// ROUTE: /api/v1/users/login
 router.post('/sign-up', authController.signup);
+router.post('/login', authController.login);
 
 // ROUTE: /api/v1/users
 router
