@@ -10,6 +10,9 @@ const router = express.Router();
 router.post('/sign-up', authController.signup);
 router.post('/login', authController.login);
 
+router.post('/forgot-password', authController.forgotPassword);
+router.patch('/reset-password/:token', authController.resetPassword);
+
 // ROUTE: /api/v1/users
 router
   .route('/')
