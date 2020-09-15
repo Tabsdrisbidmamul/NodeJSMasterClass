@@ -12,6 +12,13 @@ router.post('/login', authController.login);
 
 router.post('/forgot-password', authController.forgotPassword);
 router.patch('/reset-password/:token', authController.resetPassword);
+router.patch(
+  '/update-password',
+  authController.protect,
+  authController.updatePassword
+);
+
+router.patch('/update-me', authController.protect, userController.updateMe);
 
 // ROUTE: /api/v1/users
 router
@@ -22,6 +29,10 @@ router
   .route('/:id')
   .get(userController.getUser)
   .patch(userController.updateUser)
-  .delete(userController.deleteUser);
+  .delete(
+    authController.protect,
+    authController.restrictTo('admin'),
+    userController.deleteUser
+  );
 
 module.exports = router;

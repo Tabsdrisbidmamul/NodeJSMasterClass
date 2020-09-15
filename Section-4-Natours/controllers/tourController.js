@@ -196,6 +196,12 @@ exports.createTour = catchAsync(async (req, res, next) => {
   });
 });
 
+/**
+ * UPDATE VALIDATOR OPTIONS
+ *  - new: true: will return the updated document instead of the old one
+ *  - runValidators: true: will run the validators again before updating
+ */
+
 exports.updateTour = catchAsync(async (req, res, next) => {
   const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
