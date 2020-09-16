@@ -1,5 +1,10 @@
 const express = require('express');
 const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+const hpp = require('hpp');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
@@ -8,13 +13,48 @@ const userRouter = require('./routes/userRoutes');
 
 const app = express();
 
-// MIDDLEWARES
+// GLOBAL MIDDLEWARES
+
+// SET Security HTTP headers
+app.use(helmet());
+
+// dev logging
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
+// Limit number of requests from the same IP
+const limiter = rateLimit({
+  max: 100,
+  windowMs: 60 * 60 * 1000,
+  message: 'Too many requests from this IP, please try again in an hour!',
+});
+
+app.use('/api', limiter);
+
+// body parser, reading data from body into req.body
 // middleware that sits in the middle of req(uests) and res(ponse) - we do this to get access to the body of a HTTP request
-app.use(express.json());
+app.use(express.json({ limit: '10kb' }));
+
+// Data sanitization against NoSQL query injections
+app.use(mongoSanitize());
+
+// Data sanitization against XSS
+app.use(xss());
+
+// Protect against request parameter pollution
+app.use(
+  hpp({
+    whitelist: [
+      'duration',
+      'ratingsQuantity',
+      'ratingsAverage',
+      'maxGroupSize, ',
+      'difficulty',
+      'price',
+    ],
+  })
+);
 
 /**
  * We can use express to serve up static files from the file structure, its is a middleware function, and we use the built-in function express.static(pathNameToStaticFiles)
@@ -33,6 +73,8 @@ app.use(express.json());
  * WHY DOES IT WORK
  * Express assumes that anything after the / and that the path is a location to a static file (has a file extension) then Express will serve the up the file, however if not, then it will go through the usual route handlers
  */
+
+// Serving static files
 app.use(express.static(`${__dirname}/public`));
 
 /**

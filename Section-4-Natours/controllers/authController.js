@@ -18,6 +18,25 @@ const generateJWT = (id) => {
 
 const createSendJWT = (user, statusCode, res) => {
   const token = generateJWT(user._id);
+
+  const cookerOptions = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+  };
+
+  if (process.env.NODE_ENV === 'production') cookerOptions.secure = true;
+
+  /**
+   * COOKIE
+   * the name of the cookie, its value and options (expires, secure etc..)
+   */
+  res.cookie('jwt', token, cookerOptions);
+
+  // remove password from output
+  user.password = undefined;
+
   if (statusCode === 201) {
     res.status(statusCode).json({
       status: 'success',
