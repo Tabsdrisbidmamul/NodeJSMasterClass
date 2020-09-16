@@ -1,5 +1,5 @@
 complete-node-bootcamp/
-Section-5-Mongo/config.env
+Section-4-Natours/config.env
 */node_modules/
 */.vscode/
 .DS_Store
