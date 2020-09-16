@@ -19,6 +19,7 @@ router.patch(
 );
 
 router.patch('/update-me', authController.protect, userController.updateMe);
+router.delete('/delete-me', authController.protect, userController.deleteMe);
 
 // ROUTE: /api/v1/users
 router

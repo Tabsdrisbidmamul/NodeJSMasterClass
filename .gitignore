@@ -1,4 +1,5 @@
 complete-node-bootcamp/
+Section-5-Mongo/config.env
 */node_modules/
 */.vscode/
 .DS_Store
