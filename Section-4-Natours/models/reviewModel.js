@@ -18,6 +18,7 @@ const reviewSchema = new mongoose.Schema(
     createdAt: {
       type: Date,
       default: Date.now(),
+      select: false,
     },
 
     tour: {
@@ -38,11 +39,16 @@ const reviewSchema = new mongoose.Schema(
   }
 );
 
-reviewSchema.pre(/^find/i, function (next) {
+reviewSchema.pre(/^find/, function (next) {
   this.populate({
-    path: 'Tour User',
-    select: '-__v -passwordChangedAt',
+    path: 'user',
+    select: 'name photo',
+  }).populate({
+    path: 'tour',
+    select: 'name',
   });
+
+  next();
 });
 
 const Review = mongoose.model('Review', reviewSchema);
