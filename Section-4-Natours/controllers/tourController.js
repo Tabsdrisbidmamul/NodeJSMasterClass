@@ -1,7 +1,6 @@
 const Tour = require('../models/tourModel');
-const APIFeatures = require('../utils/apifeatures');
 const catchAsync = require('../utils/catchAsync');
-const AppError = require('../utils/appError');
+const factory = require('./handlerFactory');
 
 /**
  * ERROR HANDLING MOVED TO utils?catchAsync.js
@@ -64,97 +63,99 @@ exports.aliasTopTours = (req, res, next) => {
   next();
 };
 
-exports.getAllTours = catchAsync(async (req, res, next) => {
-  /**
-   * The req.query attribute holds an object of a query passed via a URL
-   *  - /api/v1/tours?duration=5&difficulty=easy
-   *
-   * The query being "?duration=5&difficulty=easy" in the path
-   *
-   * The returned object being:
-   *  - { duration: '5', difficulty: 'easy'}
-   *
-   * With this, Express allows us to really easily extract the key-value contents from a query (filter) in a URL path
-   *
-   * FILTERING
-   * There are 2 ways of going about this
-   *  1. MongoDB filtering object
-   *    Model.find( {_id: 15255...} )
-   *  2. Mongoose Query Object chaining methods
-   *    Model.find().where(key).equals(value).where()
-   *
-   * MongoDB Filtering Object
-   * This will return all tour documents within the collection that has a duration of 5 and a difficulty of easy
-   * Tour.find({ duration: 5, difficulty: "easy" })
-   *
-   * Mongoose Query Object
-   * The exact same filter as the one above, but using Mongoose Driver code instead
-   * Tour.find().where("duration").equals(5).where("difficulty").equals("easy")
-   *
-   * QUERY
-   * The query object in Mongoose is not a promise but rather implements the promise interface of thenable and catchable
-   *
-   * When we use the find() method it returns a query object which we can use methods from its prototype to get filtering done
-   *
-   * For use to complex querying like sorting, limiting, pagination etc..., we must do them before we actually await the query object
-   *
-   * WHY?
-   * When you use the await operator on a Query object, it will execute the query itself, thus not allowing us to run any chain methods on it - ultimately not being able to sort the query
-   */
-  // console.log(req.query);
+// exports.getAllTours = catchAsync(async (req, res, next) => {
+//   /**
+//    * The req.query attribute holds an object of a query passed via a URL
+//    *  - /api/v1/tours?duration=5&difficulty=easy
+//    *
+//    * The query being "?duration=5&difficulty=easy" in the path
+//    *
+//    * The returned object being:
+//    *  - { duration: '5', difficulty: 'easy'}
+//    *
+//    * With this, Express allows us to really easily extract the key-value contents from a query (filter) in a URL path
+//    *
+//    * FILTERING
+//    * There are 2 ways of going about this
+//    *  1. MongoDB filtering object
+//    *    Model.find( {_id: 15255...} )
+//    *  2. Mongoose Query Object chaining methods
+//    *    Model.find().where(key).equals(value).where()
+//    *
+//    * MongoDB Filtering Object
+//    * This will return all tour documents within the collection that has a duration of 5 and a difficulty of easy
+//    * Tour.find({ duration: 5, difficulty: "easy" })
+//    *
+//    * Mongoose Query Object
+//    * The exact same filter as the one above, but using Mongoose Driver code instead
+//    * Tour.find().where("duration").equals(5).where("difficulty").equals("easy")
+//    *
+//    * QUERY
+//    * The query object in Mongoose is not a promise but rather implements the promise interface of thenable and catchable
+//    *
+//    * When we use the find() method it returns a query object which we can use methods from its prototype to get filtering done
+//    *
+//    * For use to complex querying like sorting, limiting, pagination etc..., we must do them before we actually await the query object
+//    *
+//    * WHY?
+//    * When you use the await operator on a Query object, it will execute the query itself, thus not allowing us to run any chain methods on it - ultimately not being able to sort the query
+//    */
+//   // console.log(req.query);
 
-  // find() returns an array of JS converted objects
-  // using MongoDB method, because req.query returns a object of key-value pairs
+//   // find() returns an array of JS converted objects
+//   // using MongoDB method, because req.query returns a object of key-value pairs
 
-  /* BUILD QUERY */
-  // FILTERING
+//   /* BUILD QUERY */
+//   // FILTERING
 
-  // if (process.env.NODE_ENV === 'development') {
-  //   query = Tour.find(JSON.parse(queryStr), { __v: 0 });
-  // } else if (process.env.NODE_ENV === 'production') {
-  //   query = Tour.find(JSON.parse(queryStr), { __v: 0, _id: 0 });
-  // }
+//   // if (process.env.NODE_ENV === 'development') {
+//   //   query = Tour.find(JSON.parse(queryStr), { __v: 0 });
+//   // } else if (process.env.NODE_ENV === 'production') {
+//   //   query = Tour.find(JSON.parse(queryStr), { __v: 0, _id: 0 });
+//   // }
 
-  /**
-   * HOW TO ADVANCE FILTER (SORT, LIMIT, FIELDS, PAGINATION)
-   * At the top, we looped over the excludeFields array, and deleted the key-value pairs that matched the values in excludeFields, this was because we wanted to target these fields individually.
-   *
-   * HOW TO DO IT?
-   * We are simply doing basic if-else blocks that see if the key page or field or sort or pagination we passed in the original query
-   *  - on req.query[.field]
-   *
-   * IF SO
-   * Mongoose actually likes to work with a string that has each search value delimited with a space, so we always want to split the string into an array using (.split(',') on the string) with its delimited value as a comma
-   *
-   * Then join the array back into a String with a space between each keyword (.join(' '))
-   *
-   * Then we pass that searchObject into query = query[.sort/select/] -> each of these method returns the Query Object back with the filtered (refined) values from the search
-   */
+//   /**
+//    * HOW TO ADVANCE FILTER (SORT, LIMIT, FIELDS, PAGINATION)
+//    * At the top, we looped over the excludeFields array, and deleted the key-value pairs that matched the values in excludeFields, this was because we wanted to target these fields individually.
+//    *
+//    * HOW TO DO IT?
+//    * We are simply doing basic if-else blocks that see if the key page or field or sort or pagination we passed in the original query
+//    *  - on req.query[.field]
+//    *
+//    * IF SO
+//    * Mongoose actually likes to work with a string that has each search value delimited with a space, so we always want to split the string into an array using (.split(',') on the string) with its delimited value as a comma
+//    *
+//    * Then join the array back into a String with a space between each keyword (.join(' '))
+//    *
+//    * Then we pass that searchObject into query = query[.sort/select/] -> each of these method returns the Query Object back with the filtered (refined) values from the search
+//    */
 
-  // MOVED TO APIFeatures
-  // SORTING
+//   // MOVED TO APIFeatures
+//   // SORTING
 
-  // FIELD LIMITING (PROJECTION - SAME AS SELECT IN SQL)
+//   // FIELD LIMITING (PROJECTION - SAME AS SELECT IN SQL)
 
-  // PAGINATION
+//   // PAGINATION
 
-  // EXECUTE QUERY
-  const features = new APIFeatures(Tour.find(), req.query)
-    .filter()
-    .sort()
-    .limitFields()
-    .paginate();
-  const tours = await features.query;
+//   // EXECUTE QUERY
+//   const features = new APIFeatures(Tour.find(), req.query)
+//     .filter()
+//     .sort()
+//     .limitFields()
+//     .paginate();
+//   const tours = await features.query;
 
-  // SEND RESPONSE
-  res.status(200).json({
-    status: 'success',
-    results: tours.length,
-    data: {
-      tours,
-    },
-  });
-});
+//   // SEND RESPONSE
+//   res.status(200).json({
+//     status: 'success',
+//     results: tours.length,
+//     data: {
+//       tours,
+//     },
+//   });
+// });
+
+exports.getAllTours = factory.getAll(Tour);
 
 /**
  * To specify a variable - so a unique identifier for the URL parameter - so in this case there are different tours and to identify a tour we assign a unique identifier to it - thus in the URL we can do so by using the the colon (:) followed by the variable name - so we used the variable name id, can be var or x or anything -> :id
@@ -164,37 +165,41 @@ exports.getAllTours = catchAsync(async (req, res, next) => {
  * We can specify optical parameters we place a question mark (?) at the end of the variable name so /api/v1/tours/:id? would mean that the tour id is optional now
  */
 
-exports.getTour = catchAsync(async (req, res, next) => {
-  /**
-   * We use req.params to return specific parts of the URL - and in this case we have a named variable within the the resource that we have created - so we simply call req.params then access the id property to get back the ID from the end-user path
-   */
-  // Tour.findOne({ _id: req.params.id })
-  const tour = await Tour.findById(req.params.id).populate('reviews');
+// exports.getTour = catchAsync(async (req, res, next) => {
+//   /**
+//    * We use req.params to return specific parts of the URL - and in this case we have a named variable within the the resource that we have created - so we simply call req.params then access the id property to get back the ID from the end-user path
+//    */
+//   // Tour.findOne({ _id: req.params.id })
+//   const tour = await Tour.findById(req.params.id).populate('reviews');
 
-  if (!tour) {
-    return next(new AppError('No tour found with that ID', 404));
-  }
+//   if (!tour) {
+//     return next(new AppError('No tour found with that ID', 404));
+//   }
 
-  res.status(200).json({
-    status: 'success',
-    results: tour.length,
-    data: {
-      tour,
-    },
-  });
-});
+//   res.status(200).json({
+//     status: 'success',
+//     results: tour.length,
+//     data: {
+//       tour,
+//     },
+//   });
+// });
 
-exports.createTour = catchAsync(async (req, res, next) => {
-  const newTour = await Tour.create(req.body);
+exports.getTour = factory.getOne(Tour, { populate: { path: 'reviews' } });
 
-  res.status(201).json({
-    status: 'success',
-    message: 'New Tour Created',
-    data: {
-      tour: newTour,
-    },
-  });
-});
+// exports.createTour = catchAsync(async (req, res, next) => {
+//   const newTour = await Tour.create(req.body);
+
+//   res.status(201).json({
+//     status: 'success',
+//     message: 'New Tour Created',
+//     data: {
+//       tour: newTour,
+//     },
+//   });
+// });
+
+exports.createTour = factory.createOne(Tour);
 
 /**
  * UPDATE VALIDATOR OPTIONS
@@ -202,38 +207,42 @@ exports.createTour = catchAsync(async (req, res, next) => {
  *  - runValidators: true: will run the validators again before updating
  */
 
-exports.updateTour = catchAsync(async (req, res, next) => {
-  const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
+// exports.updateTour = catchAsync(async (req, res, next) => {
+//   const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
+//     new: true,
+//     runValidators: true,
+//   });
 
-  if (!tour) {
-    return next(new AppError('No tour found with that ID', 404));
-  }
+//   if (!tour) {
+//     return next(new AppError('No tour found with that ID', 404));
+//   }
 
-  res.status(200).json({
-    status: 'success',
-    message: 'Tour Updated',
-    data: {
-      tour,
-    },
-  });
-});
+//   res.status(200).json({
+//     status: 'success',
+//     message: 'Tour Updated',
+//     data: {
+//       tour,
+//     },
+//   });
+// });
 
-exports.deleteTour = catchAsync(async (req, res, next) => {
-  const tour = await Tour.findByIdAndDelete(req.params.id);
+exports.updateTour = factory.updateOne(Tour);
 
-  if (!tour) {
-    return next(new AppError('No tour found with that ID', 404));
-  }
+// exports.deleteTour = catchAsync(async (req, res, next) => {
+//   const tour = await Tour.findByIdAndDelete(req.params.id);
 
-  res.status(204).json({
-    status: 'success',
-    message: 'Tour Deleted',
-    data: null,
-  });
-});
+//   if (!tour) {
+//     return next(new AppError('No tour found with that ID', 404));
+//   }
+
+//   res.status(204).json({
+//     status: 'success',
+//     message: 'Tour Deleted',
+//     data: null,
+//   });
+// });
+
+exports.deleteTour = factory.deleteOne(Tour);
 
 /**
  * AGGREGATION PIPELINE (SQL GROUPING)
