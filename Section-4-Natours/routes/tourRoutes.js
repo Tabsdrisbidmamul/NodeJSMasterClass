@@ -1,9 +1,64 @@
 const express = require('express');
 const tourController = require('../controllers/tourController');
 const authController = require('../controllers/authController');
+const reviewRouter = require('../routes/reviewRoutes');
+// const reviewController = require('../controllers/reviewController');
 
 // ROUTING
 const router = express.Router();
+
+/**
+ * EMBED ROUTES
+ * These are routes that instead of using query strings, we instead create routes that actually make sense in the front-end
+ *
+ * EXAMPLE
+ * A logged in user, should be able to click on a tour and then write a review
+ *
+ * We extract the user information from the req.body.user (from when we store the user in the body)
+ *
+ * We extract the tourId from the URL params
+ * 
+ * 
+ * SIMPLE BAD EXAMPLE
+ * The code here works, but the problem is we have this bit of code thats and functions very similar to the one in reviewRoutes, so we can actually reuse it 
+ * router
+  .route('/:tourId/reviews')
+  .post(
+    authController.protect,
+    authController.restrictTo('user'),
+    reviewController.createReview
+  );
+ *
+ *
+ * GOOD EXAMPLE
+ * We can use mounting - just like we have done in app.js, we can do the same as well with this, we specify the route and then the route handler like so - and just like we have a nicely decoupled route handlers
+ * 
+ * router.use('/:tourId/reviews', reviewRouter);
+ * 
+ * Only problem is the :tourId is not accessible in the reviewRoutes anymore
+ * 
+ * HOW TO FIX?
+ * We set the option to mergeParams to true in the router
+ * 
+ * WE USE mergeParams
+ * mergeParams basically tells Express that the route should have access to all of the previous routes parameter ids
+ *  
+ * // ROUTING in reviewsRoutes.js
+   const router = express.Router({ mergeParams: true });
+ *  
+ * This tells NodeJS that this route should have access to the previous routes parameters
+ * 
+ * 
+ */
+
+/**
+ * EXAMPLES OF EMBED ROUTES
+ * POST tours/1287jhsg/reviews
+ * GET tours/1287jhsg/reviews
+ * GET tours/1287jhsg/reviews/sjhfg55jsh
+ */
+
+router.use('/:tourId/reviews', reviewRouter);
 
 // At every response where we check an id within the path, it will run a check to see if the id is not greater than the tours array length, if it is then return a response that will end the request-response cycle before getting to the main route handlers
 // router.param('id', tourController.checkID);

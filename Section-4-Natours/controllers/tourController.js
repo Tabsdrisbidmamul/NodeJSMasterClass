@@ -169,7 +169,7 @@ exports.getTour = catchAsync(async (req, res, next) => {
    * We use req.params to return specific parts of the URL - and in this case we have a named variable within the the resource that we have created - so we simply call req.params then access the id property to get back the ID from the end-user path
    */
   // Tour.findOne({ _id: req.params.id })
-  const tour = await Tour.findById(req.params.id);
+  const tour = await Tour.findById(req.params.id).populate('reviews');
 
   if (!tour) {
     return next(new AppError('No tour found with that ID', 404));

@@ -202,6 +202,75 @@ const tourSchema = new mongoose.Schema(
 );
 
 /**
+ * EMBEDDING
+ * This is where we keep the documents within the container document, so the contained documents do exist elsewhere - but if one has to be updated, then they have to be updated in those 2 places
+ *
+ * SYNTAX
+ * filedName: Array
+ *
+ * guides: Array
+ *
+ * We use a pre save middleware to populate the document with the embedded documents
+ * 
+ * 
+ * tourSchema.pre('save', async function (next) {
+   this.guides = await Promise.all(this.guides.map((id) => User.findById(id)));
+   next();
+ });
+ *
+ * 
+ */
+
+/**
+ * REFERENCING
+ * Basically primary and foreign keys in a DB
+ * 2 types of referencing: Parent and Child referencing
+ * 
+ * PARENT REFERENCING
+ * The parent document will hold references to every document that is useful, and such will store a reference to every single of its child document - meaning that the parent knows its children
+ * 
+ * Parent Referencing: We store each document reference in an array, and we write it like this:
+ * 
+ * guides: [{
+        type: mongoose.Schema.ObjectId,
+        ref: 'User',
+      }],
+ * 
+ * This field will contain an array of User documents
+ * 
+ * HOW?
+ * We specify 2 fields, the type and the ref
+ * type: will say how to uniquely identify it - so its _id
+ * ref: which Model to look for the data in - we write the model name how we wrote it in the Schema - so title-ized
+ * 
+ * CHILD REFERENCING
+ * Child referencing is where the child will store a reference to its parent document, but the parent will not know its children.
+ * 
+ * Literally the exact same syntax as PARENT REFERENCING in the Schema, but to populate it we have to use a virtual, so a field that is not persisted in the Schema
+ * 
+ * EXPLAINED IN VIRTUALS TO POPULATE
+ * 
+ * tourSchema.virtual('reviews', {
+  ref: 'Review',
+  foreignField: 'tour',
+  localField: '_id',
+  });
+ * 
+ * And as this is a special case where we usually are populating on when one tour is retrieved, we go to the handler for getTour, and chain .populate() onto with the virtual field name as the lookup
+ * 
+ * We use JS Promise.all to await all the promise objects within the array that was returned from map()
+ * 
+ */
+
+/**
+ * QUERY.PROTOTYPE.POPULATE
+ *
+ * The populate method allows the referencing to actually work, because it will find the document in said model and then retrieve those documents from that model and then populate (so embed) the documents into the container documents (the one that is doing the referencing)
+ *
+ * Populates behind the scene actually are running their own query, so having multiple populates can hinder performance, so minimize to 2 levels
+ */
+
+/**
  * VIRTUALS
  * These are fields within the Collection Schema that are not persistent - meaning, that they are not saved directly into the DB's hardware storage. They can be seen as almost as prototypes in JS - that every document has access to these helper functions - but are not actually part of the document itself - in turn saving storage space
  * 
@@ -224,9 +293,25 @@ const tourSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
  * 
+ * VIRTUALS TO POPULATE
+ * If we did child referencing within a parent schema - obviously the parent will have no idea of its children, and most of the time it is okay - but when we need to reference back to the child - we have to use virtuals to do so
+ * 
+ * Like normal referencing we have to specify the ref, as normal, to the Model it should get data from
+ * 
+ * We then have to write 2 new fields, foreignField and localField 
+ * foreignField will point to the field within the Model that we referenced where the parent Schema (this, being the Tours)
+ * 
+ * And the localField being how to relate back to them - so in this case we used their _id(s) to do, so we write _id
+ * 
  */
 tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
+});
+
+tourSchema.virtual('reviews', {
+  ref: 'Review',
+  foreignField: 'tour',
+  localField: '_id',
 });
 
 /**
