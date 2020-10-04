@@ -11,6 +11,7 @@ exports.filter = (req, res, next) => {
 
 exports.checkAuthor = catchAsync(async (req, res, next) => {
   const review = await Review.findById(req.params.id);
+  if (!review) return next(new AppError('This review no longer exists!', 404));
   if (req.user.role !== 'admin' && review.user.id !== req.user.id)
     return next(new AppError('You cannot edit this review', 403));
 

@@ -57,7 +57,6 @@ exports.createOne = (Model) =>
 
     res.status(201).json({
       status: 'success',
-      message: 'New Tour Created',
       data: {
         [modelName]: newDoc,
       },
@@ -94,7 +93,9 @@ exports.getAll = (Model) =>
       .sort()
       .limitFields()
       .paginate();
-    const docs = await features.query.explain();
+    // Will display statistics of the query
+    // const docs = await features.query.explain();
+    const docs = await features.query;
     const modelName = getModelName(Model);
 
     // SEND RESPONSE
