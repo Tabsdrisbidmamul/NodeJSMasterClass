@@ -12,14 +12,17 @@ router.post('/login', authController.login);
 
 router.post('/forgot-password', authController.forgotPassword);
 router.patch('/reset-password/:token', authController.resetPassword);
-router.patch(
-  '/update-password',
-  authController.protect,
-  authController.updatePassword
-);
 
-router.patch('/update-me', authController.protect, userController.updateMe);
-router.delete('/delete-me', authController.protect, userController.deleteMe);
+// Middleware runs in sequence, so all these routes will have to be authenticate first before getting access to the other routes
+router.use(authController.protect);
+
+router.patch('/update-password', authController.updatePassword);
+router.get('/me', userController.getMe, userController.getUser);
+router.patch('/update-me', userController.updateMe);
+router.delete('/delete-me', userController.deleteMe);
+
+// Only admins should be able to run these commands
+router.use(authController.restrictTo('admin'));
 
 // ROUTE: /api/v1/users
 router
@@ -29,15 +32,7 @@ router
 router
   .route('/:id')
   .get(userController.getUser)
-  .patch(
-    authController.protect,
-    authController.restrictTo('admin'),
-    userController.updateUser
-  )
-  .delete(
-    authController.protect,
-    authController.restrictTo('admin'),
-    userController.deleteUser
-  );
+  .patch(userController.updateUser)
+  .delete(userController.deleteUser);
 
 module.exports = router;

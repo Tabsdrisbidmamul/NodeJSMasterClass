@@ -23,6 +23,11 @@ const filterObj = (obj, ...fieldsToKeep) => {
 //   });
 // });
 
+exports.getMe = (req, res, next) => {
+  req.params.id = req.user.id;
+  next();
+};
+
 exports.getAllUsers = factory.getAll(User);
 
 // user only
@@ -80,7 +85,7 @@ exports.createUser = (req, res) => {
 // };
 
 // admin/ lead-tour
-exports.getUser = factory.createOne(User);
+exports.getUser = factory.getOne(User);
 
 // admin
 exports.updateUser = factory.updateOne(User);
