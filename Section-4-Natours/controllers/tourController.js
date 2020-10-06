@@ -1,5 +1,6 @@
 const Tour = require('../models/tourModel');
 const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/appError');
 const factory = require('./handlerFactory');
 
 /**
@@ -37,6 +38,77 @@ const factory = require('./handlerFactory');
   }
   next();
 }; */
+
+exports.getDistances = catchAsync(async (req, res, next) => {
+  const { latlng, unit } = req.params;
+  const [lat, lng] = latlng.split(',');
+
+  const multiplier = unit === 'mi' ? 0.000621371 : 0.001;
+
+  if (!lat || !lng) {
+    return next(
+      new AppError(
+        'Please specify a latitude and a longitude in the format lat,lng',
+        400
+      )
+    );
+  }
+
+  const distances = await Tour.aggregate([
+    {
+      $geoNear: {
+        near: {
+          type: 'Point',
+          coordinates: [lng * 1, lat * 1],
+        },
+        distanceField: 'distance',
+        distanceMultiplier: multiplier,
+        spherical: true,
+      },
+    },
+
+    {
+      $project: { distance: 1, name: 1 },
+    },
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      distances,
+    },
+  });
+});
+
+exports.getToursWithin = catchAsync(async (req, res, next) => {
+  // /tours-within/:distance/center/:latlng/unit/:unit
+  // latlng: 34.156172,-118.137908
+
+  const { distance, latlng, unit } = req.params;
+  const [lat, lng] = latlng.split(',');
+  const radius = unit === 'mi' ? distance / 3963.2 : distance / 6378.1;
+
+  if (!lat || !lng) {
+    return next(
+      new AppError(
+        'Please specify a latitude and a longitude in the format lat,lng',
+        400
+      )
+    );
+  }
+
+  const tours = await Tour.find({
+    startLocation: { $geoWithin: { $centerSphere: [[lng, lat], radius] } },
+  });
+
+  res.status(200).json({
+    status: 'success',
+    results: tours.length,
+    data: {
+      tours,
+    },
+  });
+});
 
 // ROUTING HANDLERS
 exports.aliasTopTours = (req, res, next) => {
@@ -349,6 +421,28 @@ exports.deleteTour = factory.deleteOne(Tour);
  * $limit
  * Just like the filter queries, it will limit the number of documents that are shown in the final output
  *  - $limit: 6,
+ * 
+ * $geoNear
+ * This aggregation is always for geoSpatial data, and it must always be first in the aggregation pipeline
+ * 
+ * 2 fields that are mandatory are near and distanceField 
+ * near will be set up just like we did for the startLocation it takes a type and a set of coordinates
+ * 
+ * the distanceField will output the aggregated data with that field name
+ * 
+ * [
+    {
+      $geoNear: {
+        near: {
+          type: 'Point',
+          coordinates: [lng * 1, lat * 1],
+        },
+        distanceField: 'distances',
+      },
+    },
+  ]
+ * 
+ * 
  * 
  */
 exports.getTourStats = catchAsync(async (req, res, next) => {

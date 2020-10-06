@@ -233,6 +233,7 @@ const tourSchema = new mongoose.Schema(
  *  key: field
  *  value: +1 - ASC ORDER
  *         -1 - DESC ORDER
+ *         2dsphere: This is for geo-spatial locations (like on points on the   Earth)
  *
  * schema.index(Object)
  *
@@ -253,6 +254,7 @@ const tourSchema = new mongoose.Schema(
 // tourSchema.index({ price: 1 });
 tourSchema.index({ price: 1, ratingsAverage: -1 });
 tourSchema.index({ slug: 1 });
+tourSchema.index({ startLocation: '2dsphere' });
 
 /**
  * EMBEDDING
@@ -494,8 +496,9 @@ tourSchema.pre(/^find/i, function (next) {
 
 // AGGREGATE MIDDLEWARE
 tourSchema.pre('aggregate', function (next) {
-  this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
-  // console.log(this);
+  if (!(this.pipeline().length > 0 && '$geoNear' in this.pipeline()[0])) {
+    this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
+  }
   next();
 });
 
