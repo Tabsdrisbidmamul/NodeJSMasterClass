@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
@@ -13,6 +14,10 @@ const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
 
 const app = express();
+
+// template engine config
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
 
 // GLOBAL MIDDLEWARES
 
@@ -76,7 +81,8 @@ app.use(
  */
 
 // Serving static files
-app.use(express.static(`${__dirname}/public`));
+// app.use(express.static(`${__dirname}/public`));
+app.use(express.static(path.join(__dirname, 'public')));
 
 /**
  * To make our own middleware, we use app.use() and pass in a function which has access to three parameters -> req, res and next.
@@ -176,6 +182,17 @@ app.use(express.static(`${__dirname}/public`));
  */
 
 // Router
+
+// templates
+/**
+ * TEMPLATES
+ * We use GET for our server-side site, and its route should be the root of our site so '/'
+ *
+ * We use .render() and pass in the filename that is in the views directory, because we specified it right in the beginning
+ */
+app.get('/', (req, res) => {
+  res.status(200).render('base');
+});
 
 // Middleware call for Router (MOUNTING)
 app.use('/api/v1/tours', tourRouter);
