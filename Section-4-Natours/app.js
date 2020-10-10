@@ -12,6 +12,7 @@ const globalErrorHandler = require('./controllers/errorController');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
+const viewRouter = require('./routes/viewRoutes');
 
 const app = express();
 
@@ -78,6 +79,15 @@ app.use(
  *
  * WHY DOES IT WORK
  * Express assumes that anything after the / and that the path is a location to a static file (has a file extension) then Express will serve the up the file, however if not, then it will go through the usual route handlers
+ *
+ * SERVING FILES WHEN REQUESTED
+ * When we use this middleware with pug, it will load them up
+ *
+ * HOW?
+ * Each of our link tags trigger a GET request to the server, and this middleware will serve them up, because we are accessing them from the root route, and each of these files belong in the public directory
+ *  - http://127.0.0.1:3000/css/style.css
+ *
+ * Another thing is that we are requesting files and not directories or routes
  */
 
 // Serving static files
@@ -190,9 +200,14 @@ app.use(express.static(path.join(__dirname, 'public')));
  *
  * We use .render() and pass in the filename that is in the views directory, because we specified it right in the beginning
  */
-app.get('/', (req, res) => {
-  res.status(200).render('base');
-});
+
+/**
+ * PUG TEMPLATE VARIABLES
+ * We can pass in variables to the the template engine, by passing in an object with the key-value pairs as the 2nd arg to render()
+ *
+ * These variables are known as LOCALS
+ */
+app.use('/', viewRouter);
 
 // Middleware call for Router (MOUNTING)
 app.use('/api/v1/tours', tourRouter);

@@ -1,1 +1,153 @@
-h1 The Park Camper
+//- PUG
+//- We write all of our html syntax with indentation (tabs wok fine)
+//- SYNTAX
+//- htmlTagName value
+//- 
+//- EXAMPLE
+//- title Natours
+//- 
+//- NESTING
+//- Just like in HTML, we indent the tag further into the parent and it becomes a child of the parent
+//- 
+//- TAG ATTRIBUTES
+//- To have attr in the tags we place them in parenthesis and use single quotes for the value
+//- SYNTAX
+//- tagName(rel='VALUE' href='LINK') 
+//-
+//- EXAMPLE
+//- link(rel='stylesheet' href='css/style.css') 
+//- 
+//- COLON
+//- If we want to write a nested element on the same line as it parent we can do like this
+//- SYNTAX
+//- tagName: childTag
+//- 
+//- EXAMPLE
+//- li: a(href='#') value
+//- 
+//- USING LOCALS (A.K.A Buffered Code)
+//- We define variables in the rendered template, so we can use them in our template code
+//- 
+//- SYNTAX
+//- It must be in this specific spacing, no space on the lhs, 1 space on the rhs of the equal sign, followed by the key name from the Locals
+//- Everything pass the equal is treated as JS
+//- tagName= localName
+//- 
+//- EXAMPLE
+//- h1= tour
+//- 
+//- USING LOCALS WITH JS
+//- We can use javascript on the locals as well
+//- 
+//- SYNTAX
+//- For a string variable
+//- tagName= localName.toUpperCase()
+//- 
+//- EXAMPLE
+//- h2= user.toUpperCase()
+//- 
+//- UNBUFFERED CODE
+//- We can write vanilla JS right into pug like so 
+//-  SYNTAX
+//- - const/ let varName = value; 
+//- tagName= varName 
+//- 
+//- EXAMPLE
+//- - const x = 9;
+//- h2= x * 2
+//- 
+//- INTERPOLATION (ANOTHER WAY OF WRITING BUFFERED/ UNBUFFERED CODE)
+//- Kind of like ES6 template string
+//- 
+//- SYNTAX
+//- tagName tagElement #{variableName}
+//- 
+//- EXAMPLE
+//- title Natours #{tour}
+//- 
+//- CLASSES AND IDS
+//- SYNTAX
+//- tagName.className/idName
+//- 
+//- EXAMPLE
+//- header.header
+//- 
+//- EXTENDING AND BLOCK
+//- Remember from flask and ninja template engine, we can use extends to basically have separate pages for products, overviews etc. whilst still retaining the overall layout and design 
+//- 
+//- In the page we want to to keep, we can place block name to say that anything from another page can inject its dynamic values into
+//- block content
+    h1 Block Content on base.pug
+//- 
+//- In the other page, we write extends base, so day that it inheriting the parent page and its layout
+//- 
+//-  We then write the block name (the same name as the one in base) these dynamic or static values are then injected into base, and when that route is called with that page, it will look as if base but with the injected content from its unique page
+//- extends base
+//- block content
+//-   h1 #{title}
+//- 
+//- LOOPING
+//- When we pass in an array through the route handler, we can loop over it, to do so
+//- 
+//- SYNTAX
+//- each varName in arrayName
+//-   do something
+//- 
+//- each tour in tours
+//-   .card.....
+//- 
+//- NOTE: indentation matters, we must indent the part of what we want looped
+//- 
+//- WHITESPACE IN PUG
+//- We can add white by adding a bar (|) followed by a number of spaces and Pug will interpret it as whitespace in the document
+//- 
+//- MIXINS
+//- We can mixins in a pug templates to reduce duplicate code
+//- 
+//- SYNTAX
+//- mixin(param list)
+//-   do something
+//- 
+//- EXAMPLE
+//- mixin overviewBox(label, text, icon)
+  .overview-box__detail
+    svg.overview-box__icon
+      use(xlink:href=`/img/icons.svg#icon-${icon}`)
+    span.overview-box__label= label
+    span.overview-box__text= text
+//- 
+//- TO USE
+//- +mixinName(arg list)
+//- 
+//- EXAMPLE
+//- +overviewBox('Next date', date, 'calendar')
+//- 
+//- 
+//- 
+
+
+
+doctype html
+html
+  head
+    meta(charset='UTF-8')
+    meta(name='viewport' content='width=device-width, initial-scale=1.0')
+        
+    link(rel='stylesheet' href='/css/style.css') 
+    link(rel='shortcut icon' type='image/png' href='/img/favicon.png') 
+    link(href='https://fonts.googleapis.com/css?family=Lato:300,300i,700'
+    rel='stylesheet')
+    
+    title Natours | #{title}
+  body
+      // HEADER
+      include _header
+      
+      // CONTENT
+      block content
+        h1 Block Content on base.pug
+
+      // FOOTER
+      include _footer
+
+        
