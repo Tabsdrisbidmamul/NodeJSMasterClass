@@ -86,6 +86,16 @@
 //- block content
 //-   h1 #{title}
 //- 
+//- APPEND AND PREPEND BLOCK
+//- It will append or prepend what we write in the block into the parent template we are extending from, convenient when we want to add to blocks and not overwrite them
+//- 
+//- SYNTAX
+//- block append/prepend blockName
+//- 
+//- 
+//- EXAMPLE
+//- block append head
+//- 
 //- LOOPING
 //- When we pass in an array through the route handler, we can loop over it, to do so
 //- 
@@ -122,6 +132,18 @@
 //- EXAMPLE
 //- +overviewBox('Next date', date, 'calendar')
 //- 
+//- IF STATEMENTS
+//- We write them using unbuffered code, and after the condition, we indent the part that matches the if statement
+//- 
+//- SYNTAX
+//- if(cond)
+//-   do something
+//- 
+//- EXAMPLE
+//- if(guide.role === 'guide')
+//-   span.overview-box__label= tourGuide
+//- 
+//- 
 //- 
 //- 
 
@@ -130,6 +152,7 @@
 doctype html
 html
   head
+  block head
     meta(charset='UTF-8')
     meta(name='viewport' content='width=device-width, initial-scale=1.0')
         
@@ -149,5 +172,8 @@ html
 
       // FOOTER
       include _footer
+
+      // SCRIPTS
+      block scripts
 
         
