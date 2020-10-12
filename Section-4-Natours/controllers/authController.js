@@ -87,38 +87,57 @@ exports.login = catchAsync(async (req, res, next) => {
   createSendJWT(user, 200, res);
 });
 
+exports.logout = (req, res) => {
+  res.cookie('jwt', 'loggedout', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+
+  res.status(200).json({ status: 'success' });
+};
+
 // only for rendered pages, no errors!
-exports.isLoggedIn = catchAsync(async (req, res, next) => {
+exports.isLoggedIn = async (req, res, next) => {
   // 1) Get token and check if it exists
-  if (req.cookies.jwt) {
-    const token = req.cookies.jwt;
+  try {
+    if (req.cookies.jwt) {
+      const token = req.cookies.jwt;
 
-    // 1) VERIFY: validate token
-    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+      // 1) VERIFY: validate token
+      const decoded = await promisify(jwt.verify)(
+        token,
+        process.env.JWT_SECRET
+      );
 
-    // 2) Check if user still exists
-    const currentUser = await User.findById(decoded.id);
-    if (!currentUser) {
+      // 2) Check if user still exists
+      const currentUser = await User.findById(decoded.id);
+      if (!currentUser) {
+        return next();
+      }
+
+      // 3) Check if user changed password after JWT token  was issued
+      if (currentUser.modifiedPassword(decoded.iat)) {
+        return next();
+      }
+
+      // THERE IS A LOGGED IN USER
+      /**
+       * ONLY FOR PUG TEMPLATES
+       * In the response we can access the locals attribute - locals are variables in pug templates, and in each and everyone one of pug templates, they will have access to a variable called user which is the currentUser
+       *
+       * This is the exact same thinking for when we req.user = currentUser, but rather in NodeJS where we can use it after every protect, we use res.locals.user in the website for every request there is
+       */
+      res.locals.user = currentUser;
       return next();
     }
-
-    // 3) Check if user changed password after JWT token  was issued
-    if (currentUser.modifiedPassword(decoded.iat)) {
-      return next();
-    }
-
-    // THERE IS A LOGGED IN USER
-    /**
-     * ONLY FOR PUG TEMPLATES
-     * In the response we can access the locals attribute - locals are variables in pug templates, and in each and everyone one of pug templates, they will have access to a variable called user which is the currentUser
-     *
-     * This is the exact same thinking for when we req.user = currentUser, but rather in NodeJS where we can use it after every protect, we use res.locals.user in the website for every request there is
-     */
-    res.locals.user = currentUser;
+  } catch (err) {
+    res.clearCookie('jwt', {
+      httpOnly: true,
+    });
     return next();
   }
   next();
-});
+};
 
 exports.protect = catchAsync(async (req, res, next) => {
   // 1) Get token and check if it exists

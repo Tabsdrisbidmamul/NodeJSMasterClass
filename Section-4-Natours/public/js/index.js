@@ -1,9 +1,31 @@
 /* eslint-disable */
-import { login } from './login';
+import '@babel/polyfill';
+import { login, logout } from './login';
+import { displayMap } from './mapbox';
 
-document.querySelector('.form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  login(email, password);
-});
+// DOM ELEMENTS
+const mapBox = document.getElementById('map');
+const loginForm = document.querySelector('.form');
+const logOutBtn = document.querySelector('.nav__el--logout');
+
+// VALUES
+
+// DELEGATION
+if (mapBox) {
+  const locations = JSON.parse(mapBox.dataset.locations);
+  displayMap(locations);
+}
+
+if (loginForm) {
+  loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    login(email, password);
+  });
+}
+
+if (logOutBtn) {
+  console.log('IN THE LOGOUTBTN STATEMENT');
+  logOutBtn.addEventListener('click', logout);
+}
