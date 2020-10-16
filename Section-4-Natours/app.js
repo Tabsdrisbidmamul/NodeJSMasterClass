@@ -62,6 +62,7 @@ app.use('/api', limiter);
 // body parser, reading data from body into req.body
 // middleware that sits in the middle of req(uests) and res(ponse) - we do this to get access to the body of a HTTP request
 app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
 // Data sanitization against NoSQL query injections
@@ -141,7 +142,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
-  console.log(req.cookies);
+  // console.log(req.cookies);
   next();
 });
 
