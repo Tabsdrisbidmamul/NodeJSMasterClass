@@ -59,7 +59,6 @@ exports.signup = catchAsync(async (req, res, next) => {
     email: req.body.email,
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
-    role: req.body.role,
   });
 
   createSendJWT(newUser, 201, res);
@@ -177,6 +176,7 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   // GRANT ACCESS TO PROTECTED ROUTE
   req.user = currentUser; // add attribute user to the request object to be used in the next middleware function
+  res.locals.user = currentUser; // add the current user to locals for pug
   next();
 });
 
