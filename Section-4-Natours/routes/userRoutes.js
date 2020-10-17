@@ -2,6 +2,15 @@ const express = require('express');
 const userController = require('../controllers/userController');
 const authController = require('../controllers/authController');
 
+/**
+ * MULTER
+ * Middleware that allows express to understand different forms being sent to the server - so we have URLEncoded, JSON and COOKIE_PARSER, so we use MULTER for multi form attributes.
+ *
+ * We instantiate it and pass in the directory where it is going to be stored, and pass it in as middleware in the update-me route, and the args we pass in is the field in the DB schema where it is going to be updated in
+ *
+ * It will also add a file property to the req packet
+ */
+
 // ROUTING
 const router = express.Router();
 
@@ -19,7 +28,12 @@ router.use(authController.protect);
 
 router.patch('/update-password', authController.updatePassword);
 router.get('/me', userController.getMe, userController.getUser);
-router.patch('/update-me', userController.updateMe);
+router.patch(
+  '/update-me',
+  userController.uploadUserPhoto,
+  userController.resizeUserPhoto,
+  userController.updateMe
+);
 router.delete('/delete-me', userController.deleteMe);
 
 // Only admins should be able to run these commands
