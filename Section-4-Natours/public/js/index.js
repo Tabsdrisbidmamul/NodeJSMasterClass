@@ -3,6 +3,7 @@ import '@babel/polyfill';
 import { login, logout } from './login';
 import { signup } from './signup';
 import { updateSettings } from './updateSettings';
+import { forgotPasswordTool, resetPassword } from './resetPassword';
 import { displayMap } from './mapbox';
 
 // DOM ELEMENTS
@@ -11,6 +12,8 @@ const loginForm = document.querySelector('#login');
 const signupForm = document.querySelector('#signup');
 const userDataForm = document.querySelector('#user-data');
 const userPasswordForm = document.querySelector('#user-password');
+const forgotPasswordForm = document.querySelector('#forgot');
+const resetPasswordForm = document.querySelector('#reset');
 const logOutBtn = document.querySelector('.nav__el--logout');
 
 // VALUES
@@ -80,5 +83,22 @@ if (userPasswordForm) {
     document.getElementById('password-current').value = '';
     document.getElementById('password').value = '';
     document.getElementById('password-confirm').value = '';
+  });
+}
+
+if (forgotPasswordForm) {
+  forgotPasswordForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    forgotPasswordTool(email);
+  });
+}
+
+if (resetPasswordForm) {
+  resetPasswordForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const password = document.getElementById('password').value;
+    const passwordConfirm = document.getElementById('password-confirm').value;
+    resetPassword(password, passwordConfirm);
   });
 }

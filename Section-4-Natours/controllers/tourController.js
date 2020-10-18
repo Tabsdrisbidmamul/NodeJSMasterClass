@@ -14,7 +14,7 @@ const multerStorage = multer.memoryStorage();
  *
  * If not we can pass an error to it to say that the file is not an image
  */
-multerFilter = (req, file, cb) => {
+const multerFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image')) {
     cb(null, true);
   } else {
@@ -29,10 +29,35 @@ exports.uploadTourImages = upload.fields([
   { name: 'images', maxCount: 3 },
 ]);
 
-exports.resizeTourImages = (req, res, next) => {
+exports.resizeTourImages = catchAsync(async (req, res, next) => {
   console.log(req.files);
+
+  if (!req.files.imageCover || !req.files.images) return next();
+
+  // 1) imageCover
+  req.body.imageCover = `tour-${req.params.id}-${Date.now()}-cover.jpeg`;
+  await sharp(req.files.imageCover[0].buffer)
+    .resize(2000, 1333)
+    .toFormat('jpeg')
+    .jpeg({ quality: 90 })
+    .toFile(`public/img/tours/${req.body.imageCover}`);
+
+  // 2) images
+  req.body.images = [];
+  await Promise.all(
+    req.files.images.map(async (file, i) => {
+      req.body.images.push(`tour-${req.params.id}-${Date.now()}-${i + 1}.jpeg`);
+      await sharp(file.buffer)
+        .resize(2000, 1333)
+        .toFormat('jpeg')
+        .jpeg({ quality: 90 })
+        .toFile(`public/img/tours/${req.body.images[i]}`);
+    })
+  );
+
+  console.log(req.body);
   next();
-};
+});
 
 /**
  * ERROR HANDLING MOVED TO utils?catchAsync.js

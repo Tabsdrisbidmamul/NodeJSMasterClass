@@ -10,7 +10,8 @@ block content
           input#email.form__input(type='email', placeholder='you@example.com', required)
         .form__group.ma-bt-md
           label.form__label(for='password') Password
-          input#password.form__input(type='password', placeholder='••••••••', required, minlength='8')
+          input#password.form__input(type='password', placeholder='••••••••', required, minlength='8', style='margin-bottom: 2rem;')
+          a(href='/forgot-your-password', style='text-decoration: none; color: #55c57a; font-size: 1.2rem; text-transform: uppercase;') forgot your password?
         .form__group
           button.btn.btn--green Login
 

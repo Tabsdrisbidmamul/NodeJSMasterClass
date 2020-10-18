@@ -1,0 +1,15 @@
+extends base
+
+block content
+  main.main
+    .login-form
+      h2.heading-secondary.ma-bt-lg Reset Password
+      form#reset.form
+        .form__group
+          label.form__label(for='password') password
+          input#password.form__input(type='password', required placeholder='••••••••', minlength='8')
+        .form__group.ma-bt-md
+          label.form__label(for='password-confirm') Confirm password
+          input#password-confirm.form__input(type='password', placeholder='••••••••', required, minlength='8')
+        .form__group
+          button.btn.btn--green Reset password

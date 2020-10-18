@@ -58,6 +58,18 @@ exports.getSignupForm = (req, res) => {
   });
 };
 
+exports.getForgotPasswordForm = (req, res) => {
+  res.status(200).render('forgot', {
+    title: 'Forgot your password',
+  });
+};
+
+exports.getResetPasswordForm = (req, res) => {
+  res.status(200).render('reset', {
+    title: 'Reset your password',
+  });
+};
+
 // exports.updateUserData = catchAsync(async (req, res, next) => {
 //   const updatedUser = await User.findByIdAndUpdate(
 //     req.user.id,
