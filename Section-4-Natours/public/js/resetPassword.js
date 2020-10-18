@@ -5,7 +5,7 @@ export const forgotPasswordTool = async (email) => {
   try {
     const res = await axios({
       method: 'POST',
-      url: 'http://127.0.0.1:3000/api/v1/users/forgot-password',
+      url: '/api/v1/users/forgot-password',
       data: {
         email,
       },
@@ -30,7 +30,7 @@ export const resetPassword = async (password, passwordConfirm) => {
     const resetToken = window.location.pathname.split('/')[2];
     const res = await axios({
       method: 'PATCH',
-      url: `http://127.0.0.1:3000/api/v1/users/reset-password/${resetToken}`,
+      url: `/api/v1/users/reset-password/${resetToken}`,
       data: {
         password,
         passwordConfirm,

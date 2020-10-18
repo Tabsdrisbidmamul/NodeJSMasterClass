@@ -6,8 +6,8 @@ export const updateSettings = async (data, type) => {
   try {
     const url =
       type === 'password'
-        ? 'http://127.0.0.1:3000/api/v1/users/update-password'
-        : 'http://127.0.0.1:3000/api/v1/users/update-me';
+        ? '/api/v1/users/update-password'
+        : '/api/v1/users/update-me';
 
     console.log(data);
 
