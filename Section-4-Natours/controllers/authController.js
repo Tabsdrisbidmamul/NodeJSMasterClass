@@ -19,20 +19,21 @@ const generateJWT = (id) => {
 const createSendJWT = (user, statusCode, res) => {
   const token = generateJWT(user._id);
 
-  const cookerOptions = {
+  const cookieOptions = {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
+    path: '/',
   };
 
-  if (process.env.NODE_ENV === 'production') cookerOptions.secure = false;
+  if (process.env.NODE_ENV === 'production') cookieOptions.secure = false;
 
   /**
    * COOKIE
    * the name of the cookie, its value and options (expires, secure etc..)
    */
-  res.cookie('jwt', token, cookerOptions);
+  res.cookie('jwt', token, cookieOptions);
 
   // remove password from output
   user.password = undefined;
